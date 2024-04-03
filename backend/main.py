@@ -1,10 +1,7 @@
 import os
 from fastapi import FastAPI, Request
 from starlette.staticfiles import StaticFiles
-from .inertia import inertia
-from .settings import settings as inertia_settings
-from .middleware import InertiaMiddleware
-from .share import share
+from .inertia import inertia, settings as inertia_settings, InertiaMiddleware, share
 
 app = FastAPI()
 
