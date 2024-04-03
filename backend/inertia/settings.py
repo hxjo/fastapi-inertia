@@ -9,7 +9,6 @@ class InertiaSettings(BaseSettings):
     INERTIA_JSON_ENCODER: Type[InertiaJsonEncoder] = InertiaJsonEncoder
     INERTIA_URL: str = "http://localhost:5173"
     INERTIA_ENV: str = "dev"
-    INERTIA_SSR_ENABLED: bool = True
     INERTIA_TEMPLATE_DIR: str = "inertia/templates"
 
     @property
