@@ -14,7 +14,7 @@ class InertiaSettings(BaseSettings):
 
     @property
     def INERTIA_TEMPLATE_ENV(self):
-        env = Environment(loader=PackageLoader('src', self.INERTIA_TEMPLATE_DIR))
+        env = Environment(loader=PackageLoader('backend', self.INERTIA_TEMPLATE_DIR))
         env.globals['script_url'] = f"{self.INERTIA_URL}/src/main.js" if self.INERTIA_ENV == 'dev' else f"/src/assets/index.js"
         return env
 
