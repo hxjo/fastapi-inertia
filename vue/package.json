@@ -5,18 +5,18 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "serve": "node dist/assets/ssr.js",
-    "build": "vite build",
-    "build:ssr": "vite build --ssr src/ssr.js",
+    "serve": "node dist/ssr/ssr.js",
+   "build": "vite build && vite build --ssr",
     "preview": "vite preview"
   },
   "dependencies": {
     "@inertiajs/vue3": "^1.0.15",
     "@vue/server-renderer": "^3.4.23",
+    "laravel-vite-plugin": "^1.0.2",
     "vue": "^3.4.21"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.4",
-    "vite": "^5.1.6"
+    "vite": "^5.0"
   }
 }

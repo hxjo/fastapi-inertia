@@ -1,6 +1,6 @@
 import './assets/index.css'
 
-import { createApp, h } from 'vue'
+import {createSSRApp, h} from 'vue'
 import { createInertiaApp } from '@inertiajs/vue3'
 
 createInertiaApp({
@@ -9,7 +9,7 @@ createInertiaApp({
     return pages[`./Pages/${name}.vue`]
   },
   setup({ el, App, props, plugin }) {
-    createApp({ render: () => h(App, props) })
+    createSSRApp({ render: () => h(App, props) })
       .use(plugin)
       .mount(el)
   },

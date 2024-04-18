@@ -2,10 +2,13 @@
 import HelloWorld from '../components/HelloWorld.vue'
 import TheWelcome from '../components/TheWelcome.vue'
 import { Link } from '@inertiajs/vue3'
+import {ref} from "vue";
 
 const props = defineProps({
   message: String
 })
+
+const counter = ref(0)
 
 console.log(props.message)
 </script>
@@ -16,6 +19,7 @@ console.log(props.message)
     <Link href="/toto">Totau</Link>
     <div class="wrapper">
       <HelloWorld msg="You did it!" />
+      <button @click="counter++">Clicked {{ counter }} times</button>
     </div>
   </header>
 

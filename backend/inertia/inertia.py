@@ -1,3 +1,5 @@
+import json
+import os
 from typing import Any, Callable, TypeVar, cast
 
 from fastapi import Request
@@ -56,7 +58,6 @@ async def render(
 
     async def render_ssr() -> HTMLResponse:
         data = json_encode(page_data(), cls=settings.INERTIA_JSON_ENCODER)
-        print(data)
         response = requests.post(
             f"{settings.INERTIA_SSR_URL}/render",
             json=data,
@@ -67,15 +68,22 @@ async def render(
         head = response_json["head"]
         displayable_head = "\n".join(head)
         body = response_json["body"]
+        with open(settings.INERTIA_MANIFEST_JSON, "r") as manifest_file:
+            manifest = json.load(manifest_file)
+
+        # Get the CSS and JS file names from the manifest
+        css_file = manifest["src/main.js"]["css"][0]
+        js_file = manifest["src/main.js"]["file"]
         html_content = f"""
            <!DOCTYPE html>
            <html>
                <head>
                    {displayable_head}
-                   <link rel="stylesheet" href="/src/assets/ssr.css">
-               </head>
-               <body>
-                   {body}
+               <link rel="stylesheet" href="/src/{css_file}">
+                </head>
+                <body>
+                    {body}
+                    <script type="module" src="/{js_file}"></script>
                </body>
            </html>
            """
@@ -102,8 +110,8 @@ async def render(
     if settings.INERTIA_SSR_ENABLED:
         try:
             return await render_ssr()
-        except Exception:
-            pass
+        except Exception as exc:
+            print(exc)
 
     template = settings.INERTIA_TEMPLATE_ENV.get_template("app.html")
     content = template.render(

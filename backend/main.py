@@ -6,14 +6,15 @@ from .inertia import inertia, settings as inertia_settings, InertiaMiddleware, s
 app = FastAPI()
 
 app.add_middleware(InertiaMiddleware)
-assets_dir = (
-    os.path.join(os.path.dirname(__file__), "..", "vue", "dist")
+vue_dir = (
+    os.path.join(os.path.dirname(__file__), "..", "vue", "dist", "client")
     if inertia_settings.INERTIA_ENV != "dev" or inertia_settings.INERTIA_SSR_ENABLED is True
     else
     os.path.join(os.path.dirname(__file__), "..", "vue", "src")
 )
 
-app.mount("/src", StaticFiles(directory=assets_dir), name="static")
+app.mount("/src", StaticFiles(directory=vue_dir), name="static")
+app.mount("/assets", StaticFiles(directory=os.path.join(vue_dir, 'assets')), name="static")
 
 
 @app.get("/")
