@@ -1,0 +1,3 @@
+-r requirements.in
+mypy ~= 1.8.0
+ruff ~= 0.3.2

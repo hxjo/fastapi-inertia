@@ -10,6 +10,8 @@ class InertiaSettings(BaseSettings):
     INERTIA_URL: str = "http://localhost:5173"
     INERTIA_ENV: str = "dev"
     INERTIA_TEMPLATE_DIR: str = "inertia/templates"
+    INERTIA_SSR_URL: str = 'http://localhost:13714'
+    INERTIA_SSR_ENABLED: bool = True
 
     @property
     def INERTIA_TEMPLATE_ENV(self) -> Environment:

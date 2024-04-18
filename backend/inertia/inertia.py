@@ -1,11 +1,12 @@
-from typing import Any
+from typing import Any, Callable, TypeVar, cast
 
 from fastapi import Request
-from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi.responses import JSONResponse, HTMLResponse, Response
 from json import dumps as json_encode
 from functools import wraps
 from .settings import settings
 from .utils import LazyProp
+import requests
 
 
 async def render(
@@ -24,7 +25,7 @@ async def render(
         )
 
     def partial_keys() -> list[str]:
-        return request.headers.get("X-Inertia-Partial-Data", "").split(",")
+        return cast(str, request.headers.get("X-Inertia-Partial-Data", "")).split(",")
 
     def deep_transform_callables(prop: Any) -> Any:
         if not isinstance(prop, dict):
@@ -53,6 +54,34 @@ async def render(
 
         return deep_transform_callables(_props)
 
+    async def render_ssr() -> HTMLResponse:
+        data = json_encode(page_data(), cls=settings.INERTIA_JSON_ENCODER)
+        print(data)
+        response = requests.post(
+            f"{settings.INERTIA_SSR_URL}/render",
+            json=data,
+            headers={"Content-Type": "application/json"},
+        )
+        response.raise_for_status()
+        response_json = response.json()
+        head = response_json["head"]
+        displayable_head = "\n".join(head)
+        body = response_json["body"]
+        html_content = f"""
+           <!DOCTYPE html>
+           <html>
+               <head>
+                   {displayable_head}
+                   <link rel="stylesheet" href="/src/assets/ssr.css">
+               </head>
+               <body>
+                   {body}
+               </body>
+           </html>
+           """
+
+        return HTMLResponse(content=html_content, status_code=200)
+
     def page_data() -> dict[str, Any]:
         return {
             "component": component,
@@ -70,6 +99,12 @@ async def render(
             },
         )
 
+    if settings.INERTIA_SSR_ENABLED:
+        try:
+            return await render_ssr()
+        except Exception:
+            pass
+
     template = settings.INERTIA_TEMPLATE_ENV.get_template("app.html")
     content = template.render(
         page=json_encode(page_data(), cls=settings.INERTIA_JSON_ENCODER),
@@ -77,17 +112,19 @@ async def render(
     )
     return HTMLResponse(content=content)
 
+T = TypeVar("T")
 
-def inertia(component: str) -> Any:
-    def decorator(func: Any) -> Any:
+
+def inertia(component: str) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         @wraps(func)
-        async def inner(request: Request, *args: Any, **kwargs: Any) -> Any:
+        async def inner(request: Request, *args: Any, **kwargs: Any) -> Response:
             props = await func(request, *args, **kwargs)
 
             if not isinstance(props, dict):
-                return props
+                return cast(Response, props)
 
-            return await render(request, component, props)
+            return await render(request, component, cast(dict[str, Any], props))
 
         return inner
 
