@@ -8,14 +8,7 @@ const projectRoot = dirname(fileURLToPath(import.meta.url));
 // https://vitejs.dev/config/
 export default defineConfig(({isSsrBuild}) => ({
     plugins: [
-        vue({
-            template: {
-                transformAssetUrls: {
-                    base: null,
-                    includeAbsolute: false,
-                },
-            },
-        }),
+        vue()
     ],
     resolve: {
         alias: {
@@ -28,9 +21,5 @@ export default defineConfig(({isSsrBuild}) => ({
         rollupOptions: {
             input: isSsrBuild ? 'src/ssr.js' : 'src/main.js',
         },
-        assetsInlineLimit: 0
     },
-    ssr: {
-        noExternal: false
-    }
 }))
