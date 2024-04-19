@@ -87,8 +87,10 @@ class InertiaRenderer:
             with open(self._config.manifest_json_path, "r") as manifest_file:
                 manifest = json.load(manifest_file)
 
-            css_file = manifest["src/main.js"]["css"][0]
-            js_file = manifest["src/main.js"]["file"]
+            extension = "ts" if self._config.use_typescript else "js"
+
+            css_file = manifest[f"src/main.{extension}"]["css"][0]
+            js_file = manifest[f"src/main.{extension}"]["file"]
             self._inertia_files = self.InertiaFiles(
                 css_file=f"/src/{css_file}", js_file=f"/{js_file}"
             )
