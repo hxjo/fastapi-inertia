@@ -34,7 +34,7 @@ class InertiaRenderer:
     _props: dict[str, Any]
     _inertia_files: InertiaFiles
 
-    def __init__(self, request: Request, config_: InertiaConfig = InertiaConfig()):
+    def __init__(self, request: Request, config_: InertiaConfig):
         self._request = request
         self._component = ""
         self._props = {}
@@ -93,7 +93,8 @@ class InertiaRenderer:
                 css_file=f"/src/{css_file}", js_file=f"/{js_file}"
             )
         else:
-            js_file = f"{self._config.dev_url}/src/main.js"
+            extension = "ts" if self._config.use_typescript else "js"
+            js_file = f"{self._config.dev_url}/src/main.{extension}"
             self._inertia_files = self.InertiaFiles(css_file=None, js_file=js_file)
 
     @classmethod

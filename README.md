@@ -79,6 +79,24 @@ createServer(page =>
   }),
 )
 ````
+And edit your /src/main.js to handle hydration
+```js
+import { createSSRApp, h } from "vue";
+import { createInertiaApp } from "@inertiajs/vue3";
+
+createInertiaApp({
+  resolve: (name) => {
+    const pages = import.meta.glob("./Pages/**/*.vue", { eager: true });
+    return pages[`./Pages/${name}.vue`];
+  },
+  setup({ el, App, props, plugin }) {
+    createSSRApp({ render: () => h(App, props) })
+      .use(plugin)
+      .mount(el);
+  },
+});
+
+```
 Next, edit you `package.json` file to adapt the build script and add an easy way to serve the ssr server
 ```json
 {
@@ -128,6 +146,8 @@ from inertia import (  # noqa
     InertiaResponse,
     InertiaRenderer,
     inertia_exception_handler,
+    inertia_renderer_factory,
+    InertiaConfig,
     InertiaVersionConflictException,
 )  
 
@@ -138,7 +158,7 @@ app.add_exception_handler(InertiaVersionConflictException, inertia_exception_han
 
 # Add the InertiaRenderer dependency
 InertiaDep = Annotated[
-    InertiaRenderer, Depends(InertiaRenderer)
+    InertiaRenderer, Depends(inertia_renderer_factory(InertiaConfig()))
 ]
 
 # Mount the src and assets folders as static files
@@ -250,7 +270,40 @@ app.mount(
 In order to use SSR, you first need to build your vue application.
 You'll need to have the inertia server running, you can do so with `node dist/ssr/ssr.js`
 Finally, you just need to set the `ssr_enabled=True` parameter in the InertiaConfig object.
+```python
+from typing import Annotated
+from fastapi import Depends, FastAPI
+from inertia import (  # noqa
+    InertiaRenderer,
+    inertia_renderer_factory,
+    InertiaConfig,
+)
 
+app = FastAPI()
+
+# Set the path to the manifest.json file
+manifest_json = os.path.join(
+    os.path.dirname(__file__), "..", "vue", "dist", "client", "manifest.json"
+)
+
+# Set the environment to production
+inertia_config = InertiaConfig(
+    manifest_json_path=manifest_json,
+    environment="production",
+    ssr_enabled=True
+)
+InertiaDep = Annotated[
+    InertiaRenderer, Depends(inertia_renderer_factory(inertia_config))
+]
+
+vue_dir = os.path.join(os.path.dirname(__file__), "..", "vue", "dist", "client")
+
+app.mount("/src", StaticFiles(directory=vue_dir), name="src")
+app.mount(
+    "/assets", StaticFiles(directory=os.path.join(vue_dir, "assets")), name="assets"
+)
+
+```
 
 ## Using the share method
 You can use the share method to pass props to Inertia from a dependency, for example. 
@@ -258,14 +311,13 @@ Here's an example of the share method in action:
 ```python
 from fastapi import FastAPI, Depends
 from typing import Annotated
-from inertia import InertiaRenderer, InertiaResponse  #noqa
+from inertia import InertiaRenderer, InertiaResponse, InertiaConfig, inertia_renderer_factory  #noqa
 
 app = FastAPI()
 
 InertiaDep = Annotated[
-    InertiaRenderer, Depends(InertiaRenderer)
+    InertiaRenderer, Depends(inertia_renderer_factory(InertiaConfig()))
 ]
-
 
 def some_dependency(inertia: InertiaDep) -> None:
     inertia.share(message="hello from dependency")
@@ -287,13 +339,13 @@ Upon rendering, inertia will read those messages and pass those as props to the 
 from fastapi import FastAPI, Depends
 from starlette.middleware.sessions import SessionMiddleware
 from typing import Annotated
-from inertia import InertiaRenderer, InertiaResponse  #noqa
+from inertia import InertiaRenderer, InertiaResponse, InertiaConfig, inertia_renderer_factory  #noqa
 
 app = FastAPI()
 app.add_middleware(SessionMiddleware, secret_key="secret_key")
 
 InertiaDep = Annotated[
-    InertiaRenderer, Depends(InertiaRenderer)
+    InertiaRenderer, Depends(inertia_renderer_factory(InertiaConfig()))
 ]
 
 
@@ -311,12 +363,12 @@ Lazy props will only be computed upon partial reloads, and not upon full page re
 ```python
 from fastapi import FastAPI, Depends
 from typing import Annotated
-from inertia import InertiaRenderer, InertiaResponse, lazy  #noqa
+from inertia import InertiaRenderer, InertiaResponse, InertiaConfig, inertia_renderer_factory  #noqa
 
 app = FastAPI()
 
 InertiaDep = Annotated[
-    InertiaRenderer, Depends(InertiaRenderer)
+    InertiaRenderer, Depends(inertia_renderer_factory(InertiaConfig()))
 ]
 
 

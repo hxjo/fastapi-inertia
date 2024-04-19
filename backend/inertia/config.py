@@ -13,3 +13,4 @@ class InertiaConfig:
     dev_url: str = "http://localhost:5173"
     ssr_url: str = "http://localhost:13714"
     ssr_enabled: bool = False
+    use_typescript: bool = False
