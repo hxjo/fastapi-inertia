@@ -1,14 +1,16 @@
 <script setup>
 import HelloWorld from '../components/HelloWorld.vue'
 import TheWelcome from '../components/TheWelcome.vue'
-import { Link } from '@inertiajs/vue3'
+import { Link, usePage } from '@inertiajs/vue3'
 
 
 const props = defineProps({
   message: String
 })
 
+const page = usePage();
 console.log(props.message)
+console.log(page.props.messages)
 </script>
 
 <template>

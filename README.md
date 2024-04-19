@@ -95,22 +95,23 @@ class InertiaSettings(BaseSettings):
 ```
 
 ## Setup and use Inertia in the FastAPI app
+
 ```python
 import os
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from .inertia import inertia, settings as inertia_settings, InertiaMiddleware, share  # type: ignore
 
-
 app = FastAPI()
 app.add_middleware(InertiaMiddleware)
 assets_dir = (
     os.path.join(os.path.dirname(__file__), "..", "vue", "src")
-    if inertia_settings.INERTIA_ENV == 'dev'
+    if inertia_settings.ENV == 'dev'
     else os.path.join(os.path.dirname(__file__), "..", "vue", "dist")
 )
 
 app.mount("/src", StaticFiles(directory=assets_dir), name="static")
+
 
 @app.get("/")
 @inertia('Index')

@@ -1,6 +1,11 @@
-from .inertia import inertia, render
-from .middleware import InertiaMiddleware
-from .share import share
-from .settings import settings
+from .exceptions import InertiaVersionConflict
+from .renderer import InertiaRenderer
+from .config import InertiaConfig
+from .factory import inertia_renderer_factory
 
-__all__ = ["inertia", "render", "InertiaMiddleware", "share", "settings"]
+__all__ = [
+    "InertiaVersionConflict",
+    "InertiaRenderer",
+    "InertiaConfig",
+    "inertia_renderer_factory",
+]

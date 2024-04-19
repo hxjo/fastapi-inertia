@@ -1,8 +1,9 @@
 from json import JSONEncoder
+from fastapi import Request
 
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
-from typing import Callable, Any
+from typing import Callable, Any, cast, TypedDict
 
 
 def model_to_dict(model: BaseModel) -> dict[str, Any]:
@@ -30,3 +31,24 @@ class LazyProp:
 
 def lazy(prop: Callable[[], Any] | Any) -> LazyProp:
     return LazyProp(prop)
+
+
+class FlashMessage(TypedDict):
+    message: str
+    category: str
+
+
+def flash_message(request: Request, message: str, category: str = "primary") -> None:
+    if "_messages" not in request.session:
+        request.session["_messages"] = []
+
+    message_: FlashMessage = {"message": message, "category": category}
+    request.session["_messages"].append(message_)
+
+
+def get_flashed_messages(request: Request) -> list[FlashMessage]:
+    return (
+        cast(list[FlashMessage], request.session.pop("_messages"))
+        if "_messages" in request.session
+        else []
+    )

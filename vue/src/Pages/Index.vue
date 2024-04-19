@@ -16,7 +16,7 @@ console.log(props.message)
 <template>
   <header>
     <img alt="Vue logo" class="logo" src="../assets/logo.svg" width="125" height="125" />
-    <Link href="/toto">Totau</Link>
+    <Link href="/2">Other page</Link>
     <div class="wrapper">
       <HelloWorld msg="You did it!" />
       <button @click="counter++">Clicked {{ counter }} times</button>
