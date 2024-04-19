@@ -6,13 +6,14 @@ from fastapi.responses import RedirectResponse
 from starlette.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from .inertia import (
-    InertiaVersionConflict,
+    InertiaResponse,
     InertiaRenderer,
-    InertiaConfig,
     inertia_renderer_factory,
+    inertia_exception_handler,
+    InertiaVersionConflictException,
+    InertiaConfig,
+    lazy,
 )
-from .inertia.renderer import InertiaResponse
-from .inertia.exceptions import inertia_exception_handler
 
 app = FastAPI()
 app.add_middleware(SessionMiddleware, secret_key="secret_key")
@@ -22,7 +23,7 @@ manifest_json = os.path.join(
     os.path.dirname(__file__), "..", "vue", "dist", "client", "manifest.json"
 )
 inertia_config = InertiaConfig(
-    MANIFEST_JSON_PATH=manifest_json,
+    manifest_json_path=manifest_json,
 )
 InertiaDep = Annotated[
     InertiaRenderer, Depends(inertia_renderer_factory(inertia_config))
@@ -31,7 +32,7 @@ InertiaDep = Annotated[
 
 vue_dir = (
     os.path.join(os.path.dirname(__file__), "..", "vue", "dist", "client")
-    if inertia_config.ENV != "development" or inertia_config.SSR_ENABLED is True
+    if inertia_config.environment != "development" or inertia_config.ssr_enabled is True
     else os.path.join(os.path.dirname(__file__), "..", "vue", "src")
 )
 
@@ -41,7 +42,7 @@ app.mount(
 )
 
 
-app.add_exception_handler(InertiaVersionConflict, inertia_exception_handler)
+app.add_exception_handler(InertiaVersionConflictException, inertia_exception_handler)
 
 
 def some_dependency(inertia: InertiaDep) -> None:
@@ -50,12 +51,16 @@ def some_dependency(inertia: InertiaDep) -> None:
 
 @app.get("/", response_model=None)
 async def index(inertia: InertiaDep) -> InertiaResponse:
-    return await inertia.render("Index", {"message": "hello from index"})
+    props = {
+        "message": "hello from index",
+        "lazy_prop": lazy(lambda: "hello from lazy prop"),
+    }
+    return await inertia.render("Index", props)
 
 
-@app.get("/2", response_model=None, dependencies=[Depends(some_dependency)])
+@app.get("/2", response_model=None)
 async def index2(inertia: InertiaDep) -> RedirectResponse:
-    inertia.flash("hello from index2")
+    inertia.flash("hello from index2 (through flash)")
     return RedirectResponse(url="/3")
 
 

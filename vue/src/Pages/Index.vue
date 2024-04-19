@@ -1,58 +1,49 @@
 <script setup>
-import HelloWorld from '../components/HelloWorld.vue'
-import TheWelcome from '../components/TheWelcome.vue'
 import { Link } from '@inertiajs/vue3'
 import {ref} from "vue";
 
-const props = defineProps({
+defineProps({
   message: String
 })
 
 const counter = ref(0)
 
-console.log(props.message)
 </script>
 
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="../assets/logo.svg" width="125" height="125" />
-    <Link href="/2">Other page</Link>
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-      <button @click="counter++">Clicked {{ counter }} times</button>
-    </div>
-  </header>
-
   <main>
-    <TheWelcome />
+      <Link href="/2">Link to other page</Link>
+      <Link href="/" :only="['lazy_prop']">Partial reload (only lazy prop)</Link>
+      <button @click="counter++">Reactive button (clicked {{ counter }} times)</button>
+    <div class="props">
+      <h1>Props</h1>
+      <span> Message: {{ message }} </span>
+      <span> Flashed messages: {{ $page.props.messages }} </span>
+      <span> Lazy prop: {{ $page.props.lazy_prop }} </span>
+    </div>
   </main>
 </template>
 
 <style scoped>
-header {
-  line-height: 1.5;
-}
+main {
+  min-height: 100dvh;
+  width: 100%;
+  display: flex;
+  gap: 1rem;
+  place-items: center;
+  place-content: center;
+  flex-direction: column;
 
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
-}
-
-@media (min-width: 1024px) {
-  header {
+  .props {
     display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
+    flex-direction: column;
+    gap: 1rem;
 
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
+    h1 {
+      font-weight: bold;
+      width: 100%;
+      text-align: center;
+    }
   }
 }
 </style>

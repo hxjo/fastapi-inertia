@@ -2,18 +2,25 @@ import logging
 
 from fastapi import Request
 from fastapi.responses import JSONResponse, HTMLResponse
-from typing import Any, Dict, Optional
+from typing import Any, Callable, Dict, Optional, TypeVar, TypedDict, Union, cast
 import json
 import requests
 
 from .config import InertiaConfig
-from .exceptions import InertiaVersionConflict
-from .utils import get_flashed_messages, flash_message
+from .exceptions import InertiaVersionConflictException
+from .utils import LazyProp
 from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
 InertiaResponse = HTMLResponse | JSONResponse
+
+T = TypeVar("T")
+
+
+class FlashMessage(TypedDict):
+    message: str
+    category: str
 
 
 class InertiaRenderer:
@@ -34,14 +41,52 @@ class InertiaRenderer:
         self._config = config_
         self._set_inertia_files()
 
-        if self._is_stale():
-            raise InertiaVersionConflict(url=str(request.url))
+        if self._is_stale:
+            raise InertiaVersionConflictException(url=str(request.url))
 
-        self._props.update({"messages": get_flashed_messages(request)})
+        self._props.update({"messages": self._get_flashed_messages()})
+
+    @property
+    def _partial_keys(self) -> list[str]:
+        return self._request.headers.get("X-Inertia-Partial-Data", "").split(",")
+
+    @property
+    def _is_inertia_request(self) -> bool:
+        return "X-Inertia" in self._request.headers
+
+    @property
+    def _is_stale(self) -> bool:
+        return bool(
+            self._request.headers.get("X-Inertia-Version", self._config.version)
+            != self._config.version
+        )
+
+    @property
+    def _is_a_partial_render(self) -> bool:
+        return (
+            "X-Inertia-Partial-Data" in self._request.headers
+            and self._request.headers.get("X-Inertia-Partial-Component", "")
+            == self._component
+        )
+
+    def _get_page_data(self) -> Dict[str, Any]:
+        return {
+            "component": self._component,
+            "props": self._build_props(),
+            "url": str(self._request.url),
+            "version": self._config.version,
+        }
+
+    def _get_flashed_messages(self) -> list[FlashMessage]:
+        return (
+            cast(list[FlashMessage], self._request.session.pop("_messages"))
+            if "_messages" in self._request.session
+            else []
+        )
 
     def _set_inertia_files(self) -> None:
-        if self._config.SSR_ENABLED or self._config.ENV == "production":
-            with open(self._config.MANIFEST_JSON_PATH, "r") as manifest_file:
+        if self._config.ssr_enabled or self._config.environment == "production":
+            with open(self._config.manifest_json_path, "r") as manifest_file:
                 manifest = json.load(manifest_file)
 
             css_file = manifest["src/main.js"]["css"][0]
@@ -51,25 +96,34 @@ class InertiaRenderer:
             )
         else:
             css_file = "/src/assets/index.css"
-            js_file = f"{self._config.DEV_URL}/src/main.js"
+            js_file = f"{self._config.dev_url}/src/main.js"
             self._inertia_files = self.InertiaFiles(css_file=css_file, js_file=js_file)
 
-    def _is_inertia_request(self) -> bool:
-        return "X-Inertia" in self._request.headers
+    @classmethod
+    def _deep_transform_callables(
+        cls, prop: Union[Callable[..., Any], Dict[str, Any]]
+    ) -> Any:
+        if not isinstance(prop, dict):
+            return prop() if callable(prop) else prop
 
-    def _is_stale(self) -> bool:
-        return bool(
-            self._request.headers.get("X-Inertia-Version", self._config.VERSION)
-            != self._config.VERSION
-        )
+        prop_ = prop.copy()
+        for key in list(prop_.keys()):
+            prop_[key] = cls._deep_transform_callables(prop_[key])
 
-    def _page_data(self) -> Dict[str, Any]:
-        return {
-            "component": self._component,
-            "props": self._props,
-            "url": str(self._request.url),
-            "version": self._config.VERSION,
-        }
+        return prop_
+
+    def _build_props(self) -> Union[Dict[str, Any], Any]:
+        _props = self._props.copy()
+
+        for key in list(_props.keys()):
+            if self._is_a_partial_render:
+                if key not in self._partial_keys:
+                    del _props[key]
+            else:
+                if isinstance(_props[key], LazyProp):
+                    del _props[key]
+
+        return self._deep_transform_callables(_props)
 
     def _get_html_content(self, head: str, body: str) -> str:
         return f"""
@@ -87,9 +141,9 @@ class InertiaRenderer:
                    """
 
     async def _render_ssr(self) -> HTMLResponse:
-        data = json.dumps(self._page_data(), cls=self._config.JSON_ENCODER)
+        data = json.dumps(self._get_page_data(), cls=self._config.json_encoder)
         response = requests.post(
-            f"{self._config.SSR_URL}/render",
+            f"{self._config.ssr_url}/render",
             json=data,
             headers={"Content-Type": "application/json"},
         )
@@ -108,7 +162,11 @@ class InertiaRenderer:
         self._props.update(props)
 
     def flash(self, message: str, category: str = "primary") -> None:
-        flash_message(self._request, message, category)
+        if "_messages" not in self._request.session:
+            self._request.session["_messages"] = []
+
+        message_: FlashMessage = {"message": message, "category": category}
+        self._request.session["_messages"].append(message_)
 
     async def render(
         self, component: str, props: Optional[Dict[str, Any]] = None
@@ -118,14 +176,14 @@ class InertiaRenderer:
 
         if "X-Inertia" in self._request.headers:
             return JSONResponse(
-                content=self._page_data(),
+                content=self._get_page_data(),
                 headers={
                     "Vary": "Accept",
                     "X-Inertia": "true",
                 },
             )
 
-        if self._config.SSR_ENABLED:
+        if self._config.ssr_enabled:
             try:
                 return await self._render_ssr()
             except Exception as exc:
@@ -135,9 +193,18 @@ class InertiaRenderer:
 
         # Fallback to server-side template rendering
         page_json = json.dumps(
-            json.dumps(self._page_data(), cls=self._config.JSON_ENCODER)
+            json.dumps(self._get_page_data(), cls=self._config.json_encoder)
         )
         body = f"<div id='app' data-page='{page_json}'></div>"
         html_content = self._get_html_content("", body)
 
         return HTMLResponse(content=html_content)
+
+
+def inertia_renderer_factory(
+    config_: InertiaConfig,
+) -> Callable[[Request], InertiaRenderer]:
+    def inertia_dependency(request: Request) -> InertiaRenderer:
+        return InertiaRenderer(request, config_)
+
+    return inertia_dependency

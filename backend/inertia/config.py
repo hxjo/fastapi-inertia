@@ -5,10 +5,10 @@ from dataclasses import dataclass
 
 @dataclass
 class InertiaConfig:
-    ENV: Literal["development", "production"] = "development"
-    VERSION: str = "1.0"
-    JSON_ENCODER: Type[InertiaJsonEncoder] = InertiaJsonEncoder
-    MANIFEST_JSON_PATH: str = ""
-    DEV_URL: str = "http://localhost:5173"
-    SSR_URL: str = "http://localhost:13714"
-    SSR_ENABLED: bool = False
+    environment: Literal["development", "production"] = "development"
+    version: str = "1.0"
+    json_encoder: Type[InertiaJsonEncoder] = InertiaJsonEncoder
+    manifest_json_path: str = ""
+    dev_url: str = "http://localhost:5173"
+    ssr_url: str = "http://localhost:13714"
+    ssr_enabled: bool = False

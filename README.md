@@ -106,7 +106,7 @@ app = FastAPI()
 app.add_middleware(InertiaMiddleware)
 assets_dir = (
     os.path.join(os.path.dirname(__file__), "..", "vue", "src")
-    if inertia_settings.ENV == 'dev'
+    if inertia_settings.environment == 'dev'
     else os.path.join(os.path.dirname(__file__), "..", "vue", "dist")
 )
 
