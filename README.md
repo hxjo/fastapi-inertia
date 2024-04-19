@@ -55,6 +55,67 @@ const props = defineProps({
 </template>
 ```
 
+## To setup SSR
+First create a ssr entrypoint, in `/src/ssr.js`
+```js
+import { createInertiaApp } from '@inertiajs/vue3'
+import createServer from '@inertiajs/vue3/server'
+import { renderToString } from '@vue/server-renderer'
+import { createSSRApp, h } from 'vue'
+
+createServer(page =>
+  createInertiaApp({
+    page,
+    render: renderToString,
+    resolve: name => {
+      const pages = import.meta.glob('./Pages/**/*.vue', { eager: true })
+      return pages[`./Pages/${name}.vue`]
+    },
+    setup({ App, props, plugin }) {
+      return createSSRApp({
+        render: () => h(App, props),
+      }).use(plugin)
+    },
+  }),
+)
+````
+Next, edit you `package.json` file to adapt the build script and add an easy way to serve the ssr server
+```json
+{
+  "serve": "node dist/ssr/ssr.js",
+  "build": "vite build && vite build --ssr"
+}
+```
+
+Then edit your vite.config.js to account for ssr builds
+```js
+import {fileURLToPath} from 'node:url'
+import { dirname } from 'path';
+
+import {defineConfig} from 'vite'
+import vue from '@vitejs/plugin-vue'
+
+const projectRoot = dirname(fileURLToPath(import.meta.url));
+// https://vitejs.dev/config/
+export default defineConfig(({isSsrBuild}) => ({
+    plugins: [
+        vue()
+    ],
+    resolve: {
+        alias: {
+            '@': `${projectRoot}/src`,
+        }
+    },
+    build: {
+        manifest: isSsrBuild ? false : 'manifest.json',
+        outDir: isSsrBuild ? 'dist/ssr' : 'dist/client',
+        rollupOptions: {
+            input: isSsrBuild ? 'src/ssr.js' : 'src/main.js',
+        },
+    },
+}))
+```
+
 # For FastAPI
 ## Setup and use Inertia in the FastAPI app
 
