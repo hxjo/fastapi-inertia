@@ -5,7 +5,7 @@ from fastapi import FastAPI, Depends
 from fastapi.responses import RedirectResponse
 from starlette.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
-from .inertia import (
+from inertia import (
     InertiaResponse,
     InertiaRenderer,
     inertia_renderer_factory,
@@ -17,7 +17,7 @@ from .inertia import (
 
 app = FastAPI()
 app.add_middleware(SessionMiddleware, secret_key="secret_key")
-app.add_exception_handler(InertiaVersionConflictException, inertia_exception_handler)
+app.add_exception_handler(InertiaVersionConflictException, inertia_exception_handler)  # type: ignore[arg-type]
 
 
 manifest_json = os.path.join(
@@ -25,6 +25,8 @@ manifest_json = os.path.join(
 )
 inertia_config = InertiaConfig(
     manifest_json_path=manifest_json,
+    environment="production",
+    ssr_enabled=True,
 )
 InertiaDep = Annotated[
     InertiaRenderer, Depends(inertia_renderer_factory(inertia_config))
@@ -43,8 +45,6 @@ app.mount(
 )
 
 
-
-
 def some_dependency(inertia: InertiaDep) -> None:
     inertia.share(message="hello from dependency")
 
@@ -55,16 +55,16 @@ async def index(inertia: InertiaDep) -> InertiaResponse:
         "message": "hello from index",
         "lazy_prop": lazy(lambda: "hello from lazy prop"),
     }
-    return await inertia.render("Index", props)
+    return await inertia.render("IndexPage", props)
 
 
 @app.get("/2", response_model=None)
-async def index2(inertia: InertiaDep) -> RedirectResponse:
+async def other_page(inertia: InertiaDep) -> RedirectResponse:
     inertia.flash("hello from index2 (through flash)")
     return RedirectResponse(url="/3")
 
 
 @app.get("/3", response_model=None, dependencies=[Depends(some_dependency)])
-async def index2_with_flashed_data(inertia: InertiaDep) -> InertiaResponse:
+async def other_page_with_flashed_data(inertia: InertiaDep) -> InertiaResponse:
     inertia.flash("hello from index3 (through flash)")
-    return await inertia.render("Index2")
+    return await inertia.render("OtherPage")

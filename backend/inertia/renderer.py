@@ -44,7 +44,6 @@ class InertiaRenderer:
         if self._is_stale:
             raise InertiaVersionConflictException(url=str(request.url))
 
-
     @property
     def _partial_keys(self) -> list[str]:
         return self._request.headers.get("X-Inertia-Partial-Data", "").split(",")
@@ -124,7 +123,11 @@ class InertiaRenderer:
         return self._deep_transform_callables(_props)
 
     def _get_html_content(self, head: str, body: str) -> str:
-        css_link = f'<link rel="stylesheet" href="{self._inertia_files.css_file}">' if self._inertia_files.css_file else ""
+        css_link = (
+            f'<link rel="stylesheet" href="{self._inertia_files.css_file}">'
+            if self._inertia_files.css_file
+            else ""
+        )
         return f"""
                    <!DOCTYPE html>
                    <html>

@@ -1,18 +1,26 @@
 <script setup>
-import { Link } from '@inertiajs/vue3'
+import { Link } from "@inertiajs/vue3";
+import { ref } from "vue";
 
 defineProps({
-  message: String
-})
+  message: String,
+});
+
+const counter = ref(0);
 </script>
 
 <template>
   <main>
-      <Link href="/">Link to other page</Link>
+    <Link href="/2">Link to other page</Link>
+    <Link href="/" :only="['lazy_prop']">Partial reload (only lazy prop)</Link>
+    <button @click="counter++">
+      Reactive button (clicked {{ counter }} times)
+    </button>
     <div class="props">
       <h1>Props</h1>
       <span> Message: {{ message }} </span>
       <span> Flashed messages: {{ $page.props.messages }} </span>
+      <span> Lazy prop: {{ $page.props.lazy_prop }} </span>
     </div>
   </main>
 </template>
@@ -26,7 +34,6 @@ main {
   place-items: center;
   place-content: center;
   flex-direction: column;
-
   > * {
     max-width: 50%;
   }

@@ -6,17 +6,22 @@
   "scripts": {
     "dev": "vite",
     "serve": "node dist/ssr/ssr.js",
-   "build": "vite build && vite build --ssr",
-    "preview": "vite preview"
+    "build": "vite build && vite build --ssr",
+    "format": "prettier --write src/",
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore"
   },
   "dependencies": {
     "@inertiajs/vue3": "^1.0.15",
     "@vue/server-renderer": "^3.4.23",
-    "laravel-vite-plugin": "^1.0.2",
     "vue": "^3.4.21"
   },
   "devDependencies": {
+    "@rushstack/eslint-patch": "^1.10.2",
     "@vitejs/plugin-vue": "^5.0.4",
+    "@vue/eslint-config-prettier": "^9.0.0",
+    "eslint": "^8.49.0",
+    "eslint-plugin-vue": "^9.25.0",
+    "prettier": "^3.2.5",
     "vite": "^5.0"
   }
 }

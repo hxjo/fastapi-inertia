@@ -124,7 +124,7 @@ import os
 from fastapi import FastAPI, Depends
 from typing import Annotated
 from fastapi.staticfiles import StaticFiles
-from .inertia import (  # noqa
+from inertia import (  # noqa
     InertiaResponse,
     InertiaRenderer,
     inertia_exception_handler,
@@ -168,7 +168,7 @@ from typing import Annotated, Any
 from fastapi import Depends
 from fastapi.encoders import jsonable_encoder
 from json import JSONEncoder
-from .inertia import (  # noqa
+from inertia import (  # noqa
     InertiaRenderer,
     inertia_renderer_factory,
     InertiaConfig,
@@ -212,7 +212,7 @@ import os
 from typing import Annotated
 from fastapi import Depends, FastAPI
 from starlette.staticfiles import StaticFiles
-from .inertia import (  # noqa
+from inertia import (  # noqa
     InertiaRenderer,
     inertia_renderer_factory,
     inertia_exception_handler,
@@ -258,7 +258,7 @@ Here's an example of the share method in action:
 ```python
 from fastapi import FastAPI, Depends
 from typing import Annotated
-from .inertia import InertiaRenderer, InertiaResponse  #noqa
+from inertia import InertiaRenderer, InertiaResponse  #noqa
 
 app = FastAPI()
 
@@ -287,7 +287,7 @@ Upon rendering, inertia will read those messages and pass those as props to the 
 from fastapi import FastAPI, Depends
 from starlette.middleware.sessions import SessionMiddleware
 from typing import Annotated
-from .inertia import InertiaRenderer, InertiaResponse  #noqa
+from inertia import InertiaRenderer, InertiaResponse  #noqa
 
 app = FastAPI()
 app.add_middleware(SessionMiddleware, secret_key="secret_key")
@@ -311,7 +311,7 @@ Lazy props will only be computed upon partial reloads, and not upon full page re
 ```python
 from fastapi import FastAPI, Depends
 from typing import Annotated
-from .inertia import InertiaRenderer, InertiaResponse, lazy  #noqa
+from inertia import InertiaRenderer, InertiaResponse, lazy  #noqa
 
 app = FastAPI()
 

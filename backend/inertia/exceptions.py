@@ -4,6 +4,7 @@ from fastapi import Request, Response, status
 class InertiaVersionConflictException(Exception):
     def __init__(self, url: str) -> None:
         self.url = url
+        super().__init__()
 
 
 def inertia_exception_handler(
