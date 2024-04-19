@@ -33,6 +33,9 @@ main {
   place-items: center;
   place-content: center;
   flex-direction: column;
+  > * {
+    max-width: 50%;
+  }
 
   .props {
     display: flex;

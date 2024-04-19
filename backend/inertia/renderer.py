@@ -26,7 +26,7 @@ class FlashMessage(TypedDict):
 class InertiaRenderer:
     @dataclass
     class InertiaFiles:
-        css_file: str
+        css_file: Union[str, None]
         js_file: str
 
     _request: Request
@@ -44,7 +44,6 @@ class InertiaRenderer:
         if self._is_stale:
             raise InertiaVersionConflictException(url=str(request.url))
 
-        self._props.update({"messages": self._get_flashed_messages()})
 
     @property
     def _partial_keys(self) -> list[str]:
@@ -95,9 +94,8 @@ class InertiaRenderer:
                 css_file=f"/src/{css_file}", js_file=f"/{js_file}"
             )
         else:
-            css_file = "/src/assets/index.css"
             js_file = f"{self._config.dev_url}/src/main.js"
-            self._inertia_files = self.InertiaFiles(css_file=css_file, js_file=js_file)
+            self._inertia_files = self.InertiaFiles(css_file=None, js_file=js_file)
 
     @classmethod
     def _deep_transform_callables(
@@ -126,12 +124,15 @@ class InertiaRenderer:
         return self._deep_transform_callables(_props)
 
     def _get_html_content(self, head: str, body: str) -> str:
+        css_link = f'<link rel="stylesheet" href="{self._inertia_files.css_file}">' if self._inertia_files.css_file else ""
         return f"""
                    <!DOCTYPE html>
                    <html>
                        <head>
-                           {head}
-                       <link rel="stylesheet" href="{self._inertia_files.css_file}">
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                            {head}
+                            {css_link}
                         </head>
                         <body>
                             {body}
@@ -171,6 +172,7 @@ class InertiaRenderer:
     async def render(
         self, component: str, props: Optional[Dict[str, Any]] = None
     ) -> HTMLResponse | JSONResponse:
+        self._props.update({"messages": self._get_flashed_messages()})
         self._component = component
         self._props.update(props or {})
 

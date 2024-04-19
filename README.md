@@ -6,22 +6,15 @@ npm create vue@latest
 ```
 (Of course, don't install vue-router)
 
-## Edit the vite config so the generated assets on build are consistent and we can properly use those with inertia
+## Edit the vite config so a manifest.json is generated
 ```js
 export default defineConfig({
     // ...
     build: {
-        rollupOptions: {
-            output: {
-                entryFileNames: `assets/[name].js`,
-                chunkFileNames: `assets/[name].js`,
-                assetFileNames: `assets/[name].[ext]`
-            }
-        }
+        manifest: 'manifest.json',
     }
 })
 ```
-And rename the `src/assets/main.css` to `src/assets/index.css`
 
 ## Install Inertia-vue
 ```bash
@@ -63,59 +56,213 @@ const props = defineProps({
 ```
 
 # For FastAPI
-## Edit settings
-> Note:
-> Those settings are read from the environment.
-> Therefore, feel free to add a load_dotenv and set those in your .env file.
-
-Edit `inertia/settings.py` to your needs:
-```python
-from typing import Type
-from pydantic_settings import BaseSettings
-from .utils import InertiaJsonEncoder  # type: ignore
-from jinja2 import Environment, PackageLoader
-
-class InertiaSettings(BaseSettings):
-    INERTIA_VERSION: str = "1.0"
-    INERTIA_JSON_ENCODER: Type[InertiaJsonEncoder] = InertiaJsonEncoder
-    INERTIA_URL: str = "http://localhost:5173"  # Replace with your VUE dev server URL
-    INERTIA_ENV: str = "dev"
-    INERTIA_TEMPLATE_DIR: str = "inertia/templates"  # Replace with your template directory if you have one
-
-    @property
-    def INERTIA_TEMPLATE_ENV(self) -> Environment:
-        # Replace `backend` with your project name
-        env = Environment(loader=PackageLoader("backend", self.INERTIA_TEMPLATE_DIR))
-        env.globals["script_url"] = (
-            f"{self.INERTIA_URL}/src/main.js"  # Optionally, replace with a main.ts
-            if self.INERTIA_ENV == "dev"
-            else "/src/assets/index.js"
-        )
-        return env
-```
-
 ## Setup and use Inertia in the FastAPI app
 
 ```python
 import os
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Depends
+from typing import Annotated
 from fastapi.staticfiles import StaticFiles
-from .inertia import inertia, settings as inertia_settings, InertiaMiddleware, share  # type: ignore
+from .inertia import (  # noqa
+    InertiaResponse,
+    InertiaRenderer,
+    inertia_exception_handler,
+    InertiaVersionConflictException,
+)  
 
 app = FastAPI()
-app.add_middleware(InertiaMiddleware)
-assets_dir = (
-    os.path.join(os.path.dirname(__file__), "..", "vue", "src")
-    if inertia_settings.environment == 'dev'
-    else os.path.join(os.path.dirname(__file__), "..", "vue", "dist")
+
+# Add the exception handler for the version conflict
+app.add_exception_handler(InertiaVersionConflictException, inertia_exception_handler)
+
+# Add the InertiaRenderer dependency
+InertiaDep = Annotated[
+    InertiaRenderer, Depends(InertiaRenderer)
+]
+
+# Mount the src and assets folders as static files
+vue_dir = os.path.join(os.path.dirname(__file__), "..", "vue", "src")
+
+app.mount("/src", StaticFiles(directory=vue_dir), name="src")
+app.mount(
+    "/assets", StaticFiles(directory=os.path.join(vue_dir, "assets")), name="assets"
 )
 
-app.mount("/src", StaticFiles(directory=assets_dir), name="static")
 
 
-@app.get("/")
-@inertia('Index')
-async def index(request: Request):
-    share(request, name="John Doe")
-    return {"message": "Hello, World!"}
+@app.get("/", response_model=None)
+async def index(inertia: InertiaDep) -> InertiaResponse:
+    props = {
+        "message": "hello from index",
+    }
+    return await inertia.render("Index", props)
+```
+
+
+## Customize the configuration
+You can edit the configuration as you desire. Here's how to do it
+```python
+import os
+from typing import Annotated, Any
+from fastapi import Depends
+from fastapi.encoders import jsonable_encoder
+from json import JSONEncoder
+from .inertia import (  # noqa
+    InertiaRenderer,
+    inertia_renderer_factory,
+    InertiaConfig,
+)
+
+manifest_json = os.path.join(
+    os.path.dirname(__file__), "..", "vue", "dist", "client", "manifest.json"
+)
+
+class CustomJsonEncoder(JSONEncoder):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+
+    def encode(self, value: Any) -> Any:
+        return jsonable_encoder(value)
+
+    
+
+inertia_config = InertiaConfig(
+    environment="production",
+    version="1.0.1",
+    json_encoder=CustomJsonEncoder,
+    manifest_json_path=manifest_json,
+    dev_url = "http://localhost:5175",
+    ssr_url = "http://localhost:12000",
+    ssr_enabled = True
+)
+
+InertiaDep = Annotated[
+    InertiaRenderer, Depends(inertia_renderer_factory(inertia_config))
+]
+
+```
+
+## Ready for production
+In order to serve your application in a production environment, you'll need to adjust a few things.
+First, you need to build your Vue application. You can do this by running `npm run build` in the `vue` directory.
+After that, you can edit the Inertia configuration as follows:
+```python
+import os
+from typing import Annotated
+from fastapi import Depends, FastAPI
+from starlette.staticfiles import StaticFiles
+from .inertia import (  # noqa
+    InertiaRenderer,
+    inertia_renderer_factory,
+    inertia_exception_handler,
+    InertiaVersionConflictException,
+    InertiaConfig,
+)
+
+app = FastAPI()
+app.add_exception_handler(InertiaVersionConflictException, inertia_exception_handler)
+
+# Set the path to the manifest.json file
+manifest_json = os.path.join(
+    os.path.dirname(__file__), "..", "vue", "dist", "client", "manifest.json"
+)
+
+# Set the environment to production
+inertia_config = InertiaConfig(
+    manifest_json_path=manifest_json,
+    environment="production",
+)
+InertiaDep = Annotated[
+    InertiaRenderer, Depends(inertia_renderer_factory(inertia_config))
+]
+
+# Set the vue directory as the dist directory
+vue_dir = os.path.join(os.path.dirname(__file__), "..", "vue", "dist", "client")
+
+app.mount("/src", StaticFiles(directory=vue_dir), name="src")
+app.mount(
+    "/assets", StaticFiles(directory=os.path.join(vue_dir, "assets")), name="assets"
+)
+```
+
+## Using SSR
+In order to use SSR, you first need to build your vue application.
+You'll need to have the inertia server running, you can do so with `node dist/ssr/ssr.js`
+Finally, you just need to set the `ssr_enabled=True` parameter in the InertiaConfig object.
+
+
+## Using the share method
+You can use the share method to pass props to Inertia from a dependency, for example. 
+Here's an example of the share method in action:
+```python
+from fastapi import FastAPI, Depends
+from typing import Annotated
+from .inertia import InertiaRenderer, InertiaResponse  #noqa
+
+app = FastAPI()
+
+InertiaDep = Annotated[
+    InertiaRenderer, Depends(InertiaRenderer)
+]
+
+
+def some_dependency(inertia: InertiaDep) -> None:
+    inertia.share(message="hello from dependency")
+
+    
+# Given the share method is called in the dependency, the props will be passed to the InertiaResponse
+@app.get("/", response_model=None, dependencies=[Depends(some_dependency)])
+async def index_with_shared_data(inertia: InertiaDep) -> InertiaResponse:
+    return await inertia.render("Index")
+```
+
+## Using the flash method
+You can use the flash method to pass a message to the next response. It will be deleted upon the next request.
+It uses Starlette's SessionMiddleware, so you need to have it enabled.
+The flash method is a simple helper which will set the message(s) in the session.
+Upon rendering, inertia will read those messages and pass those as props to the InertiaResponse, under the `messages` key.
+
+```python
+from fastapi import FastAPI, Depends
+from starlette.middleware.sessions import SessionMiddleware
+from typing import Annotated
+from .inertia import InertiaRenderer, InertiaResponse  #noqa
+
+app = FastAPI()
+app.add_middleware(SessionMiddleware, secret_key="secret_key")
+
+InertiaDep = Annotated[
+    InertiaRenderer, Depends(InertiaRenderer)
+]
+
+
+@app.get("/", response_model=None)
+async def index_with_flashed_data(inertia: InertiaDep) -> InertiaResponse:
+    inertia.flash(message="hello from flash", category="primary")
+    inertia.flash(message="an error happened", category="error")
+    return await inertia.render("Index")
+```
+
+## Using lazy props
+You can use the lazy props to pass a callable to the InertiaResponse. 
+Lazy props will only be computed upon partial reloads, and not upon full page reloads. (see InertiaJS docs for more info)
+
+```python
+from fastapi import FastAPI, Depends
+from typing import Annotated
+from .inertia import InertiaRenderer, InertiaResponse, lazy  #noqa
+
+app = FastAPI()
+
+InertiaDep = Annotated[
+    InertiaRenderer, Depends(InertiaRenderer)
+]
+
+
+@app.get("/", response_model=None)
+async def index_with_shared_data(inertia: InertiaDep) -> InertiaResponse:
+    props = {
+        "message": lazy(lambda: "hello from lazy prop")
+    }
+    return await inertia.render("Index", props)
 ```

@@ -27,6 +27,10 @@ main {
   place-content: center;
   flex-direction: column;
 
+  > * {
+    max-width: 50%;
+  }
+
   .props {
     display: flex;
     flex-direction: column;

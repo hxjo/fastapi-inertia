@@ -1,4 +1,4 @@
-import {fileURLToPath, URL} from 'node:url'
+import {fileURLToPath} from 'node:url'
 import { dirname } from 'path';
 
 import {defineConfig} from 'vite'
