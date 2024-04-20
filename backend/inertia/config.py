@@ -14,3 +14,4 @@ class InertiaConfig:
     ssr_url: str = "http://localhost:13714"
     ssr_enabled: bool = False
     use_typescript: bool = False
+    use_flash_messages: bool = False

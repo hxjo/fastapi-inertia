@@ -169,6 +169,9 @@ class InertiaRenderer:
         self._props.update(props)
 
     def flash(self, message: str, category: str = "primary") -> None:
+        if not self._config.use_flash_messages:
+            raise NotImplementedError("Flash messages are not enabled")
+
         if "_messages" not in self._request.session:
             self._request.session["_messages"] = []
 
@@ -178,7 +181,9 @@ class InertiaRenderer:
     async def render(
         self, component: str, props: Optional[Dict[str, Any]] = None
     ) -> HTMLResponse | JSONResponse:
-        self._props.update({"messages": self._get_flashed_messages()})
+        if self._config.use_flash_messages:
+            self._props.update({"messages": self._get_flashed_messages()})
+
         self._component = component
         self._props.update(props or {})
 
