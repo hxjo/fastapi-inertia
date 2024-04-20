@@ -10,23 +10,26 @@ app = FastAPI()
 
 app.add_middleware(SessionMiddleware, secret_key="secret_key")
 
+FLASH_MESSAGE_KEY = "some_special_key"
+
 InertiaDep = Annotated[
     InertiaRenderer, Depends(inertia_renderer_factory(InertiaConfig(
         use_flash_messages=True,
+        flash_message_key=FLASH_MESSAGE_KEY
     ))),
 ]
 
 
 PROPS = {
     "message": "hello from index",
-    "messages": [{"message": "hello from flash message", "category": "info"}]
+    FLASH_MESSAGE_KEY: [{"message": "hello from flash message", "category": "info"}]
 }
 
 COMPONENT = "IndexPage"
 
 
 def dependency(inertia: InertiaDep) -> None:
-    messages = cast(list[dict[str, str]], PROPS.get("messages"))
+    messages = cast(list[dict[str, str]], PROPS.get(FLASH_MESSAGE_KEY))
     inertia.flash(**messages[0])
 
 
@@ -74,7 +77,7 @@ def test_flash_message_is_not_included_on_second_request() -> None:
             "component": COMPONENT,
             "props": {
                 "message": PROPS.get("message"),
-                "messages": [],
+                FLASH_MESSAGE_KEY: [],
             },
             "url": f"{client.base_url}/other-page",
             "version": "1.0",
