@@ -182,7 +182,7 @@ class InertiaRenderer:
         self, component: str, props: Optional[Dict[str, Any]] = None
     ) -> HTMLResponse | JSONResponse:
         if self._config.use_flash_messages:
-            self._props.update({"messages": self._get_flashed_messages()})
+            self._props.update({self._config.flash_message_key: self._get_flashed_messages()})
 
         self._component = component
         self._props.update(props or {})
