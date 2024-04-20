@@ -20,12 +20,14 @@ COMPONENT = "IndexPage"
 
 
 def dependency(inertia: InertiaDep) -> None:
-    inertia.share(message=PROPS.get("dependency_message"))
+    inertia.share(dependency_message=PROPS.get("dependency_message"))
 
 
 @app.get("/", response_model=None, dependencies=[Depends(dependency)])
 async def index(inertia: InertiaDep) -> InertiaResponse:
-    return await inertia.render(COMPONENT, PROPS)
+    return await inertia.render(COMPONENT, {
+        "message": PROPS.get("message"),
+    })
 
 
 def test_shared_data_is_included_from_dependency() -> None:
