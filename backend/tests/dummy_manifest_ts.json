@@ -1,0 +1,11 @@
+{
+  "src/main.ts": {
+    "file": "assets/main-DOVmxSVH.js",
+    "name": "main",
+    "src": "src/main.ts",
+    "isEntry": true,
+    "css": [
+      "assets/main-jJL2BnPz.css"
+    ]
+  }
+}
