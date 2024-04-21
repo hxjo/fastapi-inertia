@@ -10,11 +10,17 @@ from ..inertia import (
 )
 
 from ..config import InertiaConfig
-from ..exceptions import InertiaVersionConflictException, inertia_exception_handler
+from ..exceptions import (
+    InertiaVersionConflictException,
+    inertia_version_conflict_exception_handler,
+)
 
 
 app = FastAPI()
-app.add_exception_handler(InertiaVersionConflictException, inertia_exception_handler)  # type: ignore[arg-type]
+app.add_exception_handler(
+    InertiaVersionConflictException,
+    inertia_version_conflict_exception_handler,  # type: ignore[arg-type]
+)
 
 InertiaDep = Annotated[Inertia, Depends(inertia_dependency_factory(InertiaConfig()))]
 

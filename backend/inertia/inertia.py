@@ -128,6 +128,17 @@ class Inertia:
             else []
         )
 
+    def _get_flashed_errors(self) -> dict[str, str]:
+        """
+        Get the flashed errors from the session (pop them from the session)
+        :return: Dict of flashed errors
+        """
+        return (
+            cast(dict[str, str], self._request.session.pop("_errors"))
+            if "_errors" in self._request.session
+            else {}
+        )
+
     def _set_inertia_files(self) -> None:
         """
         Set the Inertia files (CSS and JS) based on the configuration
@@ -307,6 +318,7 @@ class Inertia:
             self._props.update(
                 {self._config.flash_message_key: self._get_flashed_messages()}
             )
+            self._props.update({"errors": self._get_flashed_errors()})
 
         self._component = component
         self._props.update(props or {})

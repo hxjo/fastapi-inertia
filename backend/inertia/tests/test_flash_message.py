@@ -38,6 +38,7 @@ InvalidInertiaDep = Annotated[
 PROPS = {
     "message": "hello from index",
     FLASH_MESSAGE_KEY: [{"message": "hello from flash message", "category": "info"}],
+    "errors": {},
 }
 
 COMPONENT = "IndexPage"
@@ -107,6 +108,7 @@ def test_flash_message_is_not_included_on_second_request() -> None:
             "props": {
                 "message": PROPS.get("message"),
                 FLASH_MESSAGE_KEY: [],
+                "errors": {},
             },
             "url": f"{client.base_url}/other-page",
             "version": "1.0",

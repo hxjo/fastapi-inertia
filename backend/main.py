@@ -3,13 +3,15 @@ from typing import Annotated
 
 from fastapi import FastAPI, Depends
 from fastapi.responses import RedirectResponse
+from fastapi.exceptions import RequestValidationError
 from starlette.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from .inertia import (
     InertiaResponse,
     Inertia,
     inertia_dependency_factory,
-    inertia_exception_handler,
+    inertia_version_conflict_exception_handler,
+    inertia_request_validation_exception_handler,
     InertiaVersionConflictException,
     InertiaConfig,
     lazy,
@@ -17,7 +19,14 @@ from .inertia import (
 
 app = FastAPI()
 app.add_middleware(SessionMiddleware, secret_key="secret_key")
-app.add_exception_handler(InertiaVersionConflictException, inertia_exception_handler)  # type: ignore[arg-type]
+app.add_exception_handler(
+    InertiaVersionConflictException,
+    inertia_version_conflict_exception_handler,  # type: ignore[arg-type]
+)
+app.add_exception_handler(
+    RequestValidationError,
+    inertia_request_validation_exception_handler,  # type: ignore[arg-type]
+)
 
 
 manifest_json = os.path.join(

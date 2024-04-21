@@ -1,5 +1,9 @@
 from .inertia import InertiaResponse, Inertia, inertia_dependency_factory
-from .exceptions import inertia_exception_handler, InertiaVersionConflictException
+from .exceptions import (
+    inertia_version_conflict_exception_handler,
+    InertiaVersionConflictException,
+    inertia_request_validation_exception_handler,
+)
 from .config import InertiaConfig
 from .utils import lazy
 
@@ -7,7 +11,8 @@ __all__ = [
     "InertiaResponse",
     "Inertia",
     "inertia_dependency_factory",
-    "inertia_exception_handler",
+    "inertia_version_conflict_exception_handler",
+    "inertia_request_validation_exception_handler",
     "InertiaVersionConflictException",
     "InertiaConfig",
     "lazy",
