@@ -24,6 +24,7 @@ class FlashMessage(TypedDict):
     """
     Flash message type
     """
+
     message: str
     category: str
 
@@ -35,11 +36,13 @@ class Inertia:
     You should use the `inertia_dependency_factory` function to create a dependency, in order
     to pass the configuration to the Inertia class
     """
+
     @dataclass
     class InertiaFiles:
         """
         Helper class to store the CSS and JS files for Inertia.js
         """
+
         css_file: Union[str, None]
         js_file: str
 
@@ -343,6 +346,7 @@ def inertia_dependency_factory(
     :param config_: InertiaConfig object
     :return: Dependency
     """
+
     def inertia_dependency(request: Request) -> Inertia:
         """
         Dependency for Inertia

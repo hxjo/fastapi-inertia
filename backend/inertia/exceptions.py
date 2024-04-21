@@ -5,6 +5,7 @@ class InertiaVersionConflictException(Exception):
     """
     Exception to raise when the Inertia version is stale
     """
+
     def __init__(self, url: str) -> None:
         """
         Constructor

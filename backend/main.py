@@ -58,11 +58,11 @@ async def index(inertia: InertiaDep) -> InertiaResponse:
 
 @app.get("/2", response_model=None)
 async def other_page(inertia: InertiaDep) -> RedirectResponse:
-    inertia.flash("hello from index2 (through flash)")
+    inertia.flash("hello from index2 (through flash)", category="message")
     return RedirectResponse(url="/3")
 
 
 @app.get("/3", response_model=None, dependencies=[Depends(some_dependency)])
 async def other_page_with_flashed_data(inertia: InertiaDep) -> InertiaResponse:
-    inertia.flash("hello from index3 (through flash)")
+    inertia.flash("hello from index3 (through flash)", category="message")
     return await inertia.render("OtherPage")

@@ -9,6 +9,7 @@ class InertiaJsonEncoder(JSONEncoder):
     Custom JSONEncoder to handle Inertia.js response data
     You can extend this class to add custom encoders for your models
     """
+
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         """
         Constructor
@@ -31,6 +32,7 @@ class LazyProp:
     """
     Lazy property that can be used to defer the evaluation of a property
     """
+
     def __init__(self, prop: Callable[[], Any] | Any):
         """
         Constructor
