@@ -30,9 +30,7 @@ InertiaDep = Annotated[
 InvalidInertiaDep = Annotated[
     Inertia,
     Depends(
-        inertia_dependency_factory(
-            InertiaConfig(flash_message_key=FLASH_MESSAGE_KEY)
-        )
+        inertia_dependency_factory(InertiaConfig(flash_message_key=FLASH_MESSAGE_KEY))
     ),
 ]
 
@@ -79,7 +77,8 @@ async def other_page(inertia: InertiaDep) -> InertiaResponse:
         },
     )
 
-@app.get('/invalid', response_model=None)
+
+@app.get("/invalid", response_model=None)
 async def invalid_inertia_page(inertia: InvalidInertiaDep) -> None:
     inertia.flash(message="hello from flash message", category="info")
 
@@ -127,6 +126,7 @@ def test_flash_message_is_persisted_on_redirect() -> None:
             "url": f"{client.base_url}/redirect",
             "version": "1.0",
         }
+
 
 def test_invalid_inertia_dependency_raises() -> None:
     with TestClient(app) as client:
