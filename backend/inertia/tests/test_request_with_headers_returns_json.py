@@ -3,13 +3,16 @@ from typing import Annotated
 
 from starlette.testclient import TestClient
 
-from inertia import InertiaRenderer, inertia_renderer_factory, InertiaConfig, InertiaResponse
+from ..inertia import (
+    Inertia,
+    inertia_dependency_factory,
+    InertiaConfig,
+    InertiaResponse,
+)
 
 app = FastAPI()
 
-InertiaDep = Annotated[
-    InertiaRenderer, Depends(inertia_renderer_factory(InertiaConfig()))
-]
+InertiaDep = Annotated[Inertia, Depends(inertia_dependency_factory(InertiaConfig()))]
 
 PROPS = {
     "message": "hello from index",
@@ -27,7 +30,7 @@ def test_request_with_headers_returns_json() -> None:
     with TestClient(app) as client:
         response = client.get("/", headers={"X-Inertia": "true"})
         assert response.status_code == 200
-        assert response.headers.get('content-type').split(';')[0] == 'application/json'
+        assert response.headers.get("content-type").split(";")[0] == "application/json"
         assert response.json() == {
             "component": COMPONENT,
             "props": PROPS,

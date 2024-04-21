@@ -5,10 +5,10 @@ from fastapi import FastAPI, Depends
 from fastapi.responses import RedirectResponse
 from starlette.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
-from inertia import (
+from .inertia import (
     InertiaResponse,
-    InertiaRenderer,
-    inertia_renderer_factory,
+    Inertia,
+    inertia_dependency_factory,
     inertia_exception_handler,
     InertiaVersionConflictException,
     InertiaConfig,
@@ -25,17 +25,15 @@ manifest_json = os.path.join(
 )
 inertia_config = InertiaConfig(
     manifest_json_path=manifest_json,
-    environment="production",
+    environment="development",
     ssr_enabled=True,
 )
-InertiaDep = Annotated[
-    InertiaRenderer, Depends(inertia_renderer_factory(inertia_config))
-]
+InertiaDep = Annotated[Inertia, Depends(inertia_dependency_factory(inertia_config))]
 
 
 vue_dir = (
     os.path.join(os.path.dirname(__file__), "..", "vue", "dist", "client")
-    if inertia_config.environment != "development" or inertia_config.ssr_enabled is True
+    if inertia_config.environment != "development"
     else os.path.join(os.path.dirname(__file__), "..", "vue", "src")
 )
 

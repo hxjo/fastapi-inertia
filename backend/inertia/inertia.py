@@ -23,7 +23,7 @@ class FlashMessage(TypedDict):
     category: str
 
 
-class InertiaRenderer:
+class Inertia:
     @dataclass
     class InertiaFiles:
         css_file: Union[str, None]
@@ -83,7 +83,7 @@ class InertiaRenderer:
         )
 
     def _set_inertia_files(self) -> None:
-        if self._config.ssr_enabled or self._config.environment == "production":
+        if self._config.environment == "production" or self._config.ssr_enabled:
             with open(self._config.manifest_json_path, "r") as manifest_file:
                 manifest = json.load(manifest_file)
 
@@ -182,7 +182,9 @@ class InertiaRenderer:
         self, component: str, props: Optional[Dict[str, Any]] = None
     ) -> HTMLResponse | JSONResponse:
         if self._config.use_flash_messages:
-            self._props.update({self._config.flash_message_key: self._get_flashed_messages()})
+            self._props.update(
+                {self._config.flash_message_key: self._get_flashed_messages()}
+            )
 
         self._component = component
         self._props.update(props or {})
@@ -214,10 +216,10 @@ class InertiaRenderer:
         return HTMLResponse(content=html_content)
 
 
-def inertia_renderer_factory(
+def inertia_dependency_factory(
     config_: InertiaConfig,
-) -> Callable[[Request], InertiaRenderer]:
-    def inertia_dependency(request: Request) -> InertiaRenderer:
-        return InertiaRenderer(request, config_)
+) -> Callable[[Request], Inertia]:
+    def inertia_dependency(request: Request) -> Inertia:
+        return Inertia(request, config_)
 
     return inertia_dependency
