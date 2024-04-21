@@ -17,9 +17,11 @@ app = FastAPI()
 
 InertiaDep = Annotated[Inertia, Depends(inertia_dependency_factory(InertiaConfig()))]
 
+
 class Person(BaseModel):
     name: str
     age: int
+
 
 PROPS = {
     "person": {
@@ -35,7 +37,9 @@ COMPONENT = "IndexPage"
 async def index(inertia: InertiaDep) -> InertiaResponse:
     name = PROPS["person"]["name"]
     age = PROPS["person"]["age"]
-    return await inertia.render(COMPONENT, {"person": Person(name=cast(str, name), age=cast(int, age))})
+    return await inertia.render(
+        COMPONENT, {"person": Person(name=cast(str, name), age=cast(int, age))}
+    )
 
 
 def test_pydantic_basemodel_are_encoded_on_json_response() -> None:
@@ -49,6 +53,7 @@ def test_pydantic_basemodel_are_encoded_on_json_response() -> None:
             "url": f"{client.base_url}/",
             "version": "1.0",
         }
+
 
 def test_pydantic_basemodel_are_encoded_on_html_response() -> None:
     with TestClient(app) as client:
