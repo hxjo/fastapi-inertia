@@ -20,6 +20,9 @@ jobs:
       - name: Install dependencies
         working-directory: ./backend
         run: uv pip install -r requirements.dev.in
-      - name: Run lint and format check
+      - name: Run lint check
         working-directory: ./backend
-        run: ./format c
+        run: ruff check .
+      - name: Run  format check
+        working-directory: ./backend
+        run: ruff format . --check

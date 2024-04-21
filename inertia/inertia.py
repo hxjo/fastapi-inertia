@@ -4,7 +4,6 @@ from fastapi import Request, Response, status
 from fastapi.responses import JSONResponse, HTMLResponse
 from typing import Any, Callable, Dict, Optional, TypeVar, TypedDict, Union, cast
 import json
-import requests
 from pydantic import BaseModel
 from starlette.responses import RedirectResponse
 
@@ -235,6 +234,8 @@ class Inertia:
         Render the page using SSR, calling the Inertia SSR server.
         :return: The HTML response
         """
+        import requests
+
         data = json.dumps(self._get_page_data(), cls=self._config.json_encoder)
         response = requests.post(
             f"{self._config.ssr_url}/render",

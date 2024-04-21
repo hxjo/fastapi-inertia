@@ -124,9 +124,10 @@ def test_first_request_returns_html_typescript() -> None:
 def test_first_request_returns_html_production() -> None:
     with open(manifest_json, "r") as manifest_file:
         manifest = json.load(manifest_file)
-
-    css_file = f"/src/{manifest["src/main.js"]["css"][0]}"
-    js_file = f"/{manifest["src/main.js"]["file"]}"
+    css_file = manifest["src/main.js"]["css"][0]
+    css_file = f"/src/{css_file}"
+    js_file = manifest["src/main.js"]["file"]
+    js_file = f"/{js_file}"
     with TestClient(app) as client:
         response = client.get("/production")
         assert response.status_code == 200
@@ -145,8 +146,10 @@ def test_first_request_returns_html_production_typescript() -> None:
     with open(manifest_json_ts, "r") as manifest_file:
         manifest = json.load(manifest_file)
 
-    css_file = f"/src/{manifest["src/main.ts"]["css"][0]}"
-    js_file = f"/{manifest["src/main.ts"]["file"]}"
+    css_file = manifest["src/main.ts"]["css"][0]
+    css_file = f"/src/{css_file}"
+    js_file = manifest["src/main.ts"]["file"]
+    js_file = f"/{js_file}"
     with TestClient(app) as client:
         response = client.get("/typescript-production")
         assert response.status_code == 200

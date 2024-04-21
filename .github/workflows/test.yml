@@ -22,4 +22,4 @@ jobs:
         run: uv pip install -r requirements.dev.in
       - name: Run tests
         working-directory: ./backend
-        run: ./test
+        run: pytest --cov-config=.coveragerc --cov=inertia --cov-report=term-missing --cov-fail-under=99 inertia/tests
