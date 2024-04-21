@@ -1,4 +1,4 @@
-name: Run test suite
+name: Run type check
 
 on:
   push:
@@ -20,6 +20,6 @@ jobs:
       - name: Install dependencies
         working-directory: ./backend
         run: uv pip install -r requirements.dev.in
-      - name: Run tests
+      - name: Run type check
         working-directory: ./backend
-        run: ./test
+        run: ./tc
