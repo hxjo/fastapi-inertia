@@ -59,9 +59,10 @@ RETURNED_JSON = {"head": ["some info in the head"], "body": "some info in the bo
 def test_returns_html(post_function: MagicMock) -> None:
     with open(manifest_json, "r") as manifest_file:
         manifest = json.load(manifest_file)
-
-    css_file = f"/src/{manifest["src/main.js"]["css"][0]}"
-    js_file = f"/{manifest["src/main.js"]["file"]}"
+    css_file = manifest["src/main.js"]["css"][0]
+    css_file = f"/src/{css_file}"
+    js_file = manifest["src/main.js"]["file"]
+    js_file = f"/{js_file}"
     with TestClient(app) as client:
         response = client.get("/")
         post_function.assert_called_once_with(
@@ -92,8 +93,10 @@ def test_fallback_to_classic_if_render_errors(post_function: MagicMock) -> None:
     with open(manifest_json, "r") as manifest_file:
         manifest = json.load(manifest_file)
 
-    css_file = f"/src/{manifest["src/main.js"]["css"][0]}"
-    js_file = f"/{manifest["src/main.js"]["file"]}"
+    css_file = manifest["src/main.js"]["css"][0]
+    css_file = f"/src/{css_file}"
+    js_file = manifest["src/main.js"]["file"]
+    js_file = f"/{js_file}"
     with TestClient(app) as client:
         response = client.get("/")
         post_function.assert_called_once_with(

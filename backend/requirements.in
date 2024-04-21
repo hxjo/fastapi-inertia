@@ -1,6 +1,0 @@
-fastapi ~= 0.110.1
-uvicorn ~= 0.29.0
-requests ~= 2.31.0
-pydantic-settings ~= 2.2.1
-types-requests ~= 2.31.0
-itsdangerous ~= 2.2.0

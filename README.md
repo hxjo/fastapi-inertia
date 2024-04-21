@@ -1,381 +1,232 @@
-# For Vue
-## Init vue project
-
+# Inertia.js FastAPI Adapter
+## Installation
+You can install the package via pip:
 ```bash
-npm create vue@latest
-```
-(Of course, don't install vue-router)
-
-## Edit the vite config so a manifest.json is generated
-```js
-export default defineConfig({
-    // ...
-    build: {
-        manifest: 'manifest.json',
-    }
-})
+pip install fastapi-inertia
 ```
 
-## Install Inertia-vue
-```bash
-npm install @inertiajs/vue3
-```
 
-## Setup Inertia
-```js
-import './assets/index.css'
+## Configuration
+You can configure the adapter by passing a `InertiaConfig` object to the `Inertia` class. 
+The following options are available:
 
-import { createApp, h } from 'vue'
-import { createInertiaApp } from '@inertiajs/vue3'
+| key                | default                | options                                 | description                                                                                                                      |
+|--------------------|------------------------|-----------------------------------------|----------------------------------------------------------------------------------------------------------------------------------|
+| environment        | development            | development,production                  | The environment to use                                                                                                           |
+| version            | 1.0.0                  | Any valid string                        | The version of your server                                                                                                       |
+| json_encoder       | InertiaJsonEncoder     | Any class that extends json.JSONEncoder | The JSON encoder used to encode page data when HTML is returned                                                                  |
+| manifest_json_path | ""                     | Any valid path                          | The path to the manifest.json file. Needed in production                                                                         |
+| dev_url            | http://localhost:5173  | Any valid url                           | The URL to the development server                                                                                                |
+| ssr_url            | http://localhost:13714 | Any valid url                           | The URL to the SSR server                                                                                                        |
+| ssr_enabled        | False                  | True,False                              | Whether to enable SSR. You need to install the `requests` package, to have set the manifest_json_path and started the SSR server |
+| use_typescript     | False                  | True,False                              | Whether to use TypeScript                                                                                                        |
+| use_flash_messages | False                  | True,False                              | Whether to use flash messages. You need to use Starlette's SessionMiddleware to use this feature                                 |
+| flash_message_key  | messages               | Any valid string                        | The key to use for flash messages                                                                                                |
+| use_flash_errors   | False                  | True,False                              | Whether to use flash errors                                                                                                      |
+| flash_error_key    | errors                 | Any valid string                        | The key to use for flash errors                                                                                                  |
 
-createInertiaApp({
-  resolve: name => {
-    const pages = import.meta.glob('./Pages/**/*.vue', { eager: true })
-    return pages[`./Pages/${name}.vue`]
-  },
-  setup({ el, App, props, plugin }) {
-    createApp({ render: () => h(App, props) })
-      .use(plugin)
-      .mount(el)
-  },
-})
-```
+## Examples
+You can see different full examples in the [following repository](https://github.com/hxjo/fastapi-inertia-examples).
 
-## Create one file in the `src/Pages` folder
-```vue
-<script setup>
-const props = defineProps({
-    message: String
-})
-  console.log(props.message)
-</script>
-<template>
-    <h1>{{ message }}</h1>
-    <p>My first Inertia app!</p>
-</template>
-```
 
-## To setup SSR
-First create a ssr entrypoint, in `/src/ssr.js`
-```js
-import { createInertiaApp } from '@inertiajs/vue3'
-import createServer from '@inertiajs/vue3/server'
-import { renderToString } from '@vue/server-renderer'
-import { createSSRApp, h } from 'vue'
+## Usage
+### Set up the dependency
+This Inertia.js adapter has been developed to be used as a FastAPI dependency.
+To use it, you first need to set up the dependency, with your desired configuration.
 
-createServer(page =>
-  createInertiaApp({
-    page,
-    render: renderToString,
-    resolve: name => {
-      const pages = import.meta.glob('./Pages/**/*.vue', { eager: true })
-      return pages[`./Pages/${name}.vue`]
-    },
-    setup({ App, props, plugin }) {
-      return createSSRApp({
-        render: () => h(App, props),
-      }).use(plugin)
-    },
-  }),
-)
-````
-And edit your /src/main.js to handle hydration
-```js
-import { createSSRApp, h } from "vue";
-import { createInertiaApp } from "@inertiajs/vue3";
-
-createInertiaApp({
-  resolve: (name) => {
-    const pages = import.meta.glob("./Pages/**/*.vue", { eager: true });
-    return pages[`./Pages/${name}.vue`];
-  },
-  setup({ el, App, props, plugin }) {
-    createSSRApp({ render: () => h(App, props) })
-      .use(plugin)
-      .mount(el);
-  },
-});
-
-```
-Next, edit you `package.json` file to adapt the build script and add an easy way to serve the ssr server
-```json
-{
-  "serve": "node dist/ssr/ssr.js",
-  "build": "vite build && vite build --ssr"
-}
-```
-
-Then edit your vite.config.js to account for ssr builds
-```js
-import {fileURLToPath} from 'node:url'
-import { dirname } from 'path';
-
-import {defineConfig} from 'vite'
-import vue from '@vitejs/plugin-vue'
-
-const projectRoot = dirname(fileURLToPath(import.meta.url));
-// https://vitejs.dev/config/
-export default defineConfig(({isSsrBuild}) => ({
-    plugins: [
-        vue()
-    ],
-    resolve: {
-        alias: {
-            '@': `${projectRoot}/src`,
-        }
-    },
-    build: {
-        manifest: isSsrBuild ? false : 'manifest.json',
-        outDir: isSsrBuild ? 'dist/ssr' : 'dist/client',
-        rollupOptions: {
-            input: isSsrBuild ? 'src/ssr.js' : 'src/main.js',
-        },
-    },
-}))
-```
-
-# For FastAPI
-## Setup and use Inertia in the FastAPI app
-
+`inertia_dependency.py`
 ```python
-import os
-from fastapi import FastAPI, Depends
-from typing import Annotated
-from fastapi.staticfiles import StaticFiles
-from inertia import (  # noqa
-    InertiaResponse,
-    InertiaRenderer,
-    inertia_exception_handler,
-    inertia_renderer_factory,
-    InertiaConfig,
-    InertiaVersionConflictException,
-)  
-
-app = FastAPI()
-
-# Add the exception handler for the version conflict
-app.add_exception_handler(InertiaVersionConflictException, inertia_exception_handler)
-
-# Add the InertiaRenderer dependency
-InertiaDep = Annotated[
-    InertiaRenderer, Depends(inertia_renderer_factory(InertiaConfig()))
-]
-
-# Mount the src and assets folders as static files
-vue_dir = os.path.join(os.path.dirname(__file__), "..", "vue", "src")
-
-app.mount("/src", StaticFiles(directory=vue_dir), name="src")
-app.mount(
-    "/assets", StaticFiles(directory=os.path.join(vue_dir, "assets")), name="assets"
-)
-
-
-
-@app.get("/", response_model=None)
-async def index(inertia: InertiaDep) -> InertiaResponse:
-    props = {
-        "message": "hello from index",
-    }
-    return await inertia.render("Index", props)
-```
-
-
-## Customize the configuration
-You can edit the configuration as you desire. Here's how to do it
-```python
-import os
-from typing import Annotated, Any
 from fastapi import Depends
-from fastapi.encoders import jsonable_encoder
-from json import JSONEncoder
-from inertia import (  # noqa
-    InertiaRenderer,
-    inertia_renderer_factory,
-    InertiaConfig,
-)
-
-manifest_json = os.path.join(
-    os.path.dirname(__file__), "..", "vue", "dist", "client", "manifest.json"
-)
-
-class CustomJsonEncoder(JSONEncoder):
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
-
-    def encode(self, value: Any) -> Any:
-        return jsonable_encoder(value)
-
-    
-
-inertia_config = InertiaConfig(
-    environment="production",
-    version="1.0.1",
-    json_encoder=CustomJsonEncoder,
-    manifest_json_path=manifest_json,
-    dev_url = "http://localhost:5175",
-    ssr_url = "http://localhost:12000",
-    ssr_enabled = True
-)
-
-InertiaDep = Annotated[
-    InertiaRenderer, Depends(inertia_renderer_factory(inertia_config))
-]
-
-```
-
-## Ready for production
-In order to serve your application in a production environment, you'll need to adjust a few things.
-First, you need to build your Vue application. You can do this by running `npm run build` in the `vue` directory.
-After that, you can edit the Inertia configuration as follows:
-```python
-import os
 from typing import Annotated
-from fastapi import Depends, FastAPI
-from starlette.staticfiles import StaticFiles
-from inertia import (  # noqa
-    InertiaRenderer,
-    inertia_renderer_factory,
-    inertia_exception_handler,
-    InertiaVersionConflictException,
-    InertiaConfig,
-)
+from fastapi_inertia import InertiaConfig, inertia_dependency_factory, Inertia
 
-app = FastAPI()
-app.add_exception_handler(InertiaVersionConflictException, inertia_exception_handler)
-
-# Set the path to the manifest.json file
-manifest_json = os.path.join(
-    os.path.dirname(__file__), "..", "vue", "dist", "client", "manifest.json"
-)
-
-# Set the environment to production
 inertia_config = InertiaConfig(
-    manifest_json_path=manifest_json,
-    environment="production",
-)
-InertiaDep = Annotated[
-    InertiaRenderer, Depends(inertia_renderer_factory(inertia_config))
-]
+        # Your desired configuration
+    )
 
-# Set the vue directory as the dist directory
-vue_dir = os.path.join(os.path.dirname(__file__), "..", "vue", "dist", "client")
-
-app.mount("/src", StaticFiles(directory=vue_dir), name="src")
-app.mount(
-    "/assets", StaticFiles(directory=os.path.join(vue_dir, "assets")), name="assets"
+inertia_dependency = inertia_dependency_factory(
+    inertia_config
 )
+
+InertiaDependency = Annotated[Inertia, Depends(inertia_dependency)]
 ```
+You can then access the `InertiaDependency` in your route functions, and use it to render your pages.
 
-## Using SSR
-In order to use SSR, you first need to build your vue application.
-You'll need to have the inertia server running, you can do so with `node dist/ssr/ssr.js`
-Finally, you just need to set the `ssr_enabled=True` parameter in the InertiaConfig object.
-```python
-from typing import Annotated
-from fastapi import Depends, FastAPI
-from inertia import (  # noqa
-    InertiaRenderer,
-    inertia_renderer_factory,
-    InertiaConfig,
-)
+### Rendering a page
+To render a page, you can use the `render` method of the `Inertia` class. It takes two arguments:
+- The name of the page
+- The data to pass to the page 
 
-app = FastAPI()
-
-# Set the path to the manifest.json file
-manifest_json = os.path.join(
-    os.path.dirname(__file__), "..", "vue", "dist", "client", "manifest.json"
-)
-
-# Set the environment to production
-inertia_config = InertiaConfig(
-    manifest_json_path=manifest_json,
-    environment="production",
-    ssr_enabled=True
-)
-InertiaDep = Annotated[
-    InertiaRenderer, Depends(inertia_renderer_factory(inertia_config))
-]
-
-vue_dir = os.path.join(os.path.dirname(__file__), "..", "vue", "dist", "client")
-
-app.mount("/src", StaticFiles(directory=vue_dir), name="src")
-app.mount(
-    "/assets", StaticFiles(directory=os.path.join(vue_dir, "assets")), name="assets"
-)
-
-```
-
-## Using the share method
-You can use the share method to pass props to Inertia from a dependency, for example. 
-Here's an example of the share method in action:
+`main.py`
 ```python
 from fastapi import FastAPI, Depends
-from typing import Annotated
-from inertia import InertiaRenderer, InertiaResponse, InertiaConfig, inertia_renderer_factory  #noqa
+from fastapi_inertia import InertiaResponse, InertiaVersionConflictException, inertia_version_conflict_exception_handler
+from inertia_dependency import InertiaDependency
 
 app = FastAPI()
 
-InertiaDep = Annotated[
-    InertiaRenderer, Depends(inertia_renderer_factory(InertiaConfig()))
-]
+app.add_exception_handler(InertiaVersionConflictException, inertia_version_conflict_exception_handler)
 
-def some_dependency(inertia: InertiaDep) -> None:
-    inertia.share(message="hello from dependency")
-
-    
-# Given the share method is called in the dependency, the props will be passed to the InertiaResponse
-@app.get("/", response_model=None, dependencies=[Depends(some_dependency)])
-async def index_with_shared_data(inertia: InertiaDep) -> InertiaResponse:
-    return await inertia.render("Index")
+@app.get('/', response_model=None)
+async def index(inertia: InertiaDependency) -> InertiaResponse:
+     return inertia.render('Index', {
+          'name': 'John Doe'
+     })
 ```
 
-## Using the flash method
-You can use the flash method to pass a message to the next response. It will be deleted upon the next request.
-It uses Starlette's SessionMiddleware, so you need to have it enabled.
-The flash method is a simple helper which will set the message(s) in the session.
-Upon rendering, inertia will read those messages and pass those as props to the InertiaResponse, under the `messages` key.
+### Rendering assets
+As your front-end framework likely references assets that are not served by FastAPI,
+you need to mount a static directory to serve these assets.
 
+`main.py`
+```python
+import os
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from inertia_dependency import inertia_config
+
+
+app = FastAPI()
+webapp_dir = (
+    os.path.join(os.path.dirname(__file__), "..", "webapp", "dist")
+    if inertia_config.environment != "development"
+    else os.path.join(os.path.dirname(__file__), "..", "webapp", "src")
+)
+
+app.mount("/src", StaticFiles(directory=webapp_dir), name="src")
+app.mount(
+    "/assets", StaticFiles(directory=os.path.join(webapp_dir, "assets")), name="assets"
+)
+```
+
+### Sharing data
+To share data, in Inertia, is basically to add data before even entering your route.
+This is useful, for example, to add a user to all your pages that expects your user to be logged in.  
+
+`main.py`
+```python
+from fastapi import FastAPI, Depends
+from fastapi_inertia import InertiaResponse, InertiaVersionConflictException, inertia_version_conflict_exception_handler
+from inertia_dependency import InertiaDependency
+
+app = FastAPI()
+
+app.add_exception_handler(InertiaVersionConflictException, inertia_version_conflict_exception_handler)
+
+def current_user(inertia: InertiaDependency):
+    inertia.share(user={
+        'name': 'John Doe'
+    })
+
+@app.get('/', response_model=None, dependencies=[Depends(current_user)])
+async def index(inertia: InertiaDependency) -> InertiaResponse:
+    """
+    Because of the dependency, and as we are sharing the user data, the user data will be available in the page.
+    """
+    return inertia.render('Index')
+```
+
+### Flash messages
+With the inertia dependency, you have access to a `flash` helper method that allows you to add flash messages to your pages.
+This is useful to display messages to the user after a form submission, for example.
+Those messages are called `flash` messages as they are only displayed once.  
+You need to have set `use_flash_messages` to `True` in your configuration to use this feature.
+You need to have the `SessionMiddleware` enabled in your application to use this feature.
+
+`main.py`
 ```python
 from fastapi import FastAPI, Depends
 from starlette.middleware.sessions import SessionMiddleware
-from typing import Annotated
-from inertia import InertiaRenderer, InertiaResponse, InertiaConfig, inertia_renderer_factory  #noqa
+from fastapi_inertia import InertiaResponse, InertiaVersionConflictException, inertia_version_conflict_exception_handler
+from inertia_dependency import InertiaDependency
 
 app = FastAPI()
-app.add_middleware(SessionMiddleware, secret_key="secret_key")
 
-InertiaDep = Annotated[
-    InertiaRenderer, Depends(inertia_renderer_factory(InertiaConfig()))
-]
+app.add_exception_handler(InertiaVersionConflictException, inertia_version_conflict_exception_handler)
+app.add_middleware(SessionMiddleware, secret_key="secret")
 
 
-@app.get("/", response_model=None)
-async def index_with_flashed_data(inertia: InertiaDep) -> InertiaResponse:
-    inertia.flash(message="hello from flash", category="primary")
-    inertia.flash(message="an error happened", category="error")
-    return await inertia.render("Index")
+@app.get('/', response_model=None)
+async def index(inertia: InertiaDependency) -> InertiaResponse:
+    inertia.flash('Index was reached successfully', category='success')
+    return inertia.render('Index')
 ```
 
-## Using lazy props
-You can use the lazy props to pass a callable to the InertiaResponse. 
-Lazy props will only be computed upon partial reloads, and not upon full page reloads. (see InertiaJS docs for more info)
+### Flash errors
+If you handle form submissions in your application, and if you do all validation at the pydantic level,
+a malformed payload will raise a `RequestValidationError` exception.
+You can use the `inertia_request_validation_exception_handler` to handle this exception and display the errors to the user.
+It supports error bags, so you can display multiple errors at once.
+If the request is not from Inertia, it will fallback to FastAPI's default error handling.  
+In order to use  this feature, you need to have set `use_flash_errors` to `True` in your configuration.
+You also need to have the `SessionMiddleware` enabled in your application to use this feature.
 
+`main.py`
 ```python
 from fastapi import FastAPI, Depends
-from typing import Annotated
-from inertia import InertiaRenderer, InertiaResponse, InertiaConfig, inertia_renderer_factory  #noqa
+from pydantic import BaseModel, model_validator
+from typing import Any
+from fastapi.exceptions import RequestValidationError
+from starlette.middleware.sessions import SessionMiddleware
+from fastapi_inertia import InertiaResponse, InertiaVersionConflictException, inertia_version_conflict_exception_handler, inertia_request_validation_exception_handler
+from inertia_dependency import InertiaDependency
 
 app = FastAPI()
 
-InertiaDep = Annotated[
-    InertiaRenderer, Depends(inertia_renderer_factory(InertiaConfig()))
-]
+app.add_exception_handler(InertiaVersionConflictException, inertia_version_conflict_exception_handler)
+app.add_exception_handler(RequestValidationError, inertia_request_validation_exception_handler)
+app.add_middleware(SessionMiddleware, secret_key="secret")
 
 
-@app.get("/", response_model=None)
-async def index_with_shared_data(inertia: InertiaDep) -> InertiaResponse:
-    props = {
-        "message": lazy(lambda: "hello from lazy prop")
-    }
-    return await inertia.render("Index", props)
+class Form(BaseModel):
+    name: str
+    
+    @model_validator(mode="before")
+    @classmethod
+    def name_must_contain_doe(cls, data: Any):
+        if 'Doe' not in data.name:
+            raise ValueError('Name must contain Doe')
+
+@app.post('/', response_model=None)
+async def index(data: Form, inertia: InertiaDependency) -> InertiaResponse:
+    return inertia.render('Index')
+```
+
+### Redirect to an external URL
+If you want to redirect the user to an external URL, you can use the `location` method of the `Inertia` class.
+It takes one argument: the URL to redirect to.
+
+`main.py`
+```python
+from fastapi import FastAPI, Depends
+from fastapi_inertia import InertiaResponse, InertiaVersionConflictException, inertia_version_conflict_exception_handler
+from inertia_dependency import InertiaDependency
+
+app = FastAPI()
+app.add_exception_handler(InertiaVersionConflictException, inertia_version_conflict_exception_handler)
+
+@app.get('/', response_model=None)
+async def index(inertia: InertiaDependency) -> InertiaResponse:
+    return inertia.location('https://google.fr')
+```
+
+
+### Redirect back
+If you want to redirect the user back (for example, after a form submission), you can use the `back` method of the `Inertia` class.
+It will use the `Referer` header to redirect the user back.
+If you're on a `GET` request, the status code will be `307`. Otherwise, it will be `303`. 
+That ways, it will trigger a new GET request to the referer URL.
+
+`main.py`
+```python
+from fastapi import FastAPI, Depends
+from fastapi_inertia import InertiaResponse, InertiaVersionConflictException, inertia_version_conflict_exception_handler
+from inertia_dependency import InertiaDependency
+
+app = FastAPI()
+app.add_exception_handler(InertiaVersionConflictException, inertia_version_conflict_exception_handler)
+
+@app.get('/', response_model=None)
+async def index(inertia: InertiaDependency) -> InertiaResponse:
+    return inertia.back()
 ```
