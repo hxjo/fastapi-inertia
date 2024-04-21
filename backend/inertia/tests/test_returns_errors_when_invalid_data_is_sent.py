@@ -6,14 +6,11 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from starlette.testclient import TestClient
 
-from ..inertia import (
+from inertia import (
     Inertia,
     inertia_dependency_factory,
     InertiaResponse,
-)
-
-from ..config import InertiaConfig
-from ..exceptions import (
+    InertiaConfig,
     InertiaVersionConflictException,
     inertia_version_conflict_exception_handler,
     inertia_request_validation_exception_handler,

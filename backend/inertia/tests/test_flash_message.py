@@ -5,13 +5,8 @@ from typing import Annotated, cast
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.testclient import TestClient
 
-from ..inertia import (
-    Inertia,
-    inertia_dependency_factory,
-    InertiaResponse,
-)
+from inertia import Inertia, inertia_dependency_factory, InertiaResponse, InertiaConfig
 
-from ..config import InertiaConfig
 
 app = FastAPI()
 

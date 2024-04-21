@@ -3,13 +3,10 @@ from typing import Annotated
 
 from starlette.testclient import TestClient
 
-from ..inertia import (
+from inertia import (
     Inertia,
     inertia_dependency_factory,
-)
-
-from ..config import InertiaConfig
-from ..exceptions import (
+    InertiaConfig,
     InertiaVersionConflictException,
     inertia_version_conflict_exception_handler,
 )

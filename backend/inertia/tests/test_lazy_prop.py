@@ -3,14 +3,14 @@ from typing import Annotated
 
 from starlette.testclient import TestClient
 
-from ..inertia import (
+from inertia import (
     Inertia,
     inertia_dependency_factory,
     InertiaResponse,
+    InertiaConfig,
+    lazy,
 )
 
-from ..config import InertiaConfig
-from ..utils import lazy
 
 app = FastAPI()
 

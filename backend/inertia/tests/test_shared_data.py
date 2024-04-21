@@ -3,13 +3,8 @@ from typing import Annotated
 
 from starlette.testclient import TestClient
 
-from ..inertia import (
-    Inertia,
-    inertia_dependency_factory,
-    InertiaResponse,
-)
+from inertia import Inertia, inertia_dependency_factory, InertiaResponse, InertiaConfig
 
-from ..config import InertiaConfig
 
 app = FastAPI()
 
