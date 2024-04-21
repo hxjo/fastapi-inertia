@@ -95,6 +95,32 @@ def test_redirects_back_with_errors_on_inertia_request_error_in_url() -> None:
         }
 
 
+def test_redirects_back_with_errors_in_error_bag_on_inertia_request() -> None:
+    error_bag = "some_error_bag"
+    with TestClient(app) as client:
+        response = client.post(
+            "/",
+            headers={
+                "X-Inertia": "true",
+                "Referer": "/",
+                "X-Inertia-Error-Bag": error_bag,
+            },
+            json={"message": 12},
+        )
+        assert response.status_code == 200
+        assert response.json() == {
+            "component": COMPONENT,
+            "props": {
+                "messages": [],
+                "errors": {
+                    error_bag: {"message": "Input should be a valid string"},
+                },
+            },
+            "url": f"{client.base_url}/",
+            "version": "1.0",
+        }
+
+
 def test_throws_422_on_non_inertia_request() -> None:
     with TestClient(app) as client:
         response = client.post("/", json={"message": 12})

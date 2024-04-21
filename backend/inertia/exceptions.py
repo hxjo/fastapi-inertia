@@ -46,12 +46,17 @@ async def inertia_request_validation_exception_handler(
     if is_inertia:
         fastapi_errors = exc.errors()
         errors = {}
+        error_bag = request.headers.get("X-Inertia-Error-Bag", None)
         for error in fastapi_errors:
-            if "loc" in error and error["loc"] is not None:
-                if len(error["loc"]) > 1:
-                    errors[error["loc"][1]] = error["msg"]
-                else:
-                    errors[error["loc"][0]] = error["msg"]
+            error_loc = error["loc"][1] if len(error["loc"]) > 1 else error["loc"][0]
+
+            if error_bag is None:
+                errors[error_loc] = error["msg"]
+            else:
+                if error_bag not in errors:
+                    errors[error_bag] = {}
+
+                errors[error_bag][error_loc] = error["msg"]
 
         request.session["_errors"] = errors
 
