@@ -18,8 +18,11 @@ jobs:
       - run: echo "VIRTUAL_ENV=${Python_ROOT_DIR}" >> $GITHUB_ENV
       - run: pip install uv
       - name: Install dependencies
+        working-directory: ./backend
         run: uv pip install -r requirements.dev.in
       - name: Run lint check
+        working-directory: ./backend
         run: ruff check .
       - name: Run format check
+        working-directory: ./backend
         run: ruff format --check .
