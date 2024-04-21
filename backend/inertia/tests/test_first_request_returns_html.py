@@ -8,9 +8,10 @@ from starlette.testclient import TestClient
 from ..inertia import (
     Inertia,
     inertia_dependency_factory,
-    InertiaConfig,
     InertiaResponse,
 )
+
+from ..config import InertiaConfig
 from .utils import get_stripped_html
 
 app = FastAPI()

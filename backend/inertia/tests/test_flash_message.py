@@ -7,9 +7,10 @@ from starlette.testclient import TestClient
 from ..inertia import (
     Inertia,
     inertia_dependency_factory,
-    InertiaConfig,
     InertiaResponse,
 )
+
+from ..config import InertiaConfig
 
 app = FastAPI()
 
