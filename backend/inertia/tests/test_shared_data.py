@@ -3,13 +3,16 @@ from typing import Annotated
 
 from starlette.testclient import TestClient
 
-from inertia import InertiaRenderer, inertia_renderer_factory, InertiaConfig, InertiaResponse
+from ..inertia import (
+    Inertia,
+    inertia_dependency_factory,
+    InertiaConfig,
+    InertiaResponse,
+)
 
 app = FastAPI()
 
-InertiaDep = Annotated[
-    InertiaRenderer, Depends(inertia_renderer_factory(InertiaConfig()))
-]
+InertiaDep = Annotated[Inertia, Depends(inertia_dependency_factory(InertiaConfig()))]
 
 PROPS = {
     "message": "hello from index",
@@ -25,20 +28,22 @@ def dependency(inertia: InertiaDep) -> None:
 
 @app.get("/", response_model=None, dependencies=[Depends(dependency)])
 async def index(inertia: InertiaDep) -> InertiaResponse:
-    return await inertia.render(COMPONENT, {
-        "message": PROPS.get("message"),
-    })
+    return await inertia.render(
+        COMPONENT,
+        {
+            "message": PROPS.get("message"),
+        },
+    )
 
 
 def test_shared_data_is_included_from_dependency() -> None:
     with TestClient(app) as client:
         response = client.get("/", headers={"X-Inertia": "true"})
         assert response.status_code == 200
-        assert response.headers.get('content-type').split(';')[0] == 'application/json'
+        assert response.headers.get("content-type").split(";")[0] == "application/json"
         assert response.json() == {
             "component": COMPONENT,
             "props": PROPS,
             "url": f"{client.base_url}/",
             "version": "1.0",
         }
-
