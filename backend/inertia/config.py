@@ -6,6 +6,10 @@ from dataclasses import dataclass
 
 @dataclass
 class InertiaConfig:
+    """
+    Configuration class for Inertia
+    """
+
     environment: Literal["development", "production"] = "development"
     version: str = "1.0"
     json_encoder: Type[JSONEncoder] = InertiaJsonEncoder

@@ -21,13 +21,28 @@ T = TypeVar("T")
 
 
 class FlashMessage(TypedDict):
+    """
+    Flash message type
+    """
+
     message: str
     category: str
 
 
 class Inertia:
+    """
+    Inertia class to handle Inertia.js responses
+    To be used as a dependency in FastAPI
+    You should use the `inertia_dependency_factory` function to create a dependency, in order
+    to pass the configuration to the Inertia class
+    """
+
     @dataclass
     class InertiaFiles:
+        """
+        Helper class to store the CSS and JS files for Inertia.js
+        """
+
         css_file: Union[str, None]
         js_file: str
 
@@ -36,7 +51,12 @@ class Inertia:
     _props: dict[str, Any]
     _inertia_files: InertiaFiles
 
-    def __init__(self, request: Request, config_: InertiaConfig):
+    def __init__(self, request: Request, config_: InertiaConfig) -> None:
+        """
+        Constructor
+        :param request: FastAPI Request object
+        :param config_: InertiaConfig object
+        """
         self._request = request
         self._component = ""
         self._props = {}
@@ -48,14 +68,26 @@ class Inertia:
 
     @property
     def _partial_keys(self) -> list[str]:
+        """
+        Get the keys of the partial data
+        :return: List of keys
+        """
         return self._request.headers.get("X-Inertia-Partial-Data", "").split(",")
 
     @property
     def _is_inertia_request(self) -> bool:
+        """
+        Check if the request is an Inertia request (requesting JSON)
+        :return: True if the request is an Inertia request, False otherwise
+        """
         return "X-Inertia" in self._request.headers
 
     @property
     def _is_stale(self) -> bool:
+        """
+        Check if the Inertia request is stale (different from the current version)
+        :return: True if the version is stale, False otherwise
+        """
         return bool(
             self._request.headers.get("X-Inertia-Version", self._config.version)
             != self._config.version
@@ -63,6 +95,10 @@ class Inertia:
 
     @property
     def _is_a_partial_render(self) -> bool:
+        """
+        Check if the request is a partial render
+        :return: True if the request is a partial render, False otherwise
+        """
         return (
             "X-Inertia-Partial-Data" in self._request.headers
             and self._request.headers.get("X-Inertia-Partial-Component", "")
@@ -70,6 +106,10 @@ class Inertia:
         )
 
     def _get_page_data(self) -> Dict[str, Any]:
+        """
+        Get the data for the page
+        :return: A dictionary with the page data
+        """
         return {
             "component": self._component,
             "props": self._build_props(),
@@ -78,6 +118,10 @@ class Inertia:
         }
 
     def _get_flashed_messages(self) -> list[FlashMessage]:
+        """
+        Get the flashed messages from the session (pop them from the session)
+        :return: List of flashed messages
+        """
         return (
             cast(list[FlashMessage], self._request.session.pop("_messages"))
             if "_messages" in self._request.session
@@ -85,6 +129,9 @@ class Inertia:
         )
 
     def _set_inertia_files(self) -> None:
+        """
+        Set the Inertia files (CSS and JS) based on the configuration
+        """
         if self._config.environment == "production" or self._config.ssr_enabled:
             with open(self._config.manifest_json_path, "r") as manifest_file:
                 manifest = json.load(manifest_file)
@@ -103,8 +150,16 @@ class Inertia:
 
     @classmethod
     def _deep_transform_callables(
-        cls, prop: Union[Callable[..., Any], Dict[str, Any]]
+        cls, prop: Union[Callable[..., Any], Dict[str, Any], BaseModel, Any]
     ) -> Any:
+        """
+        Deeply transform callables in a dictionary, evaluating them if they are callables
+        If the value is a BaseModel, it will call the model_dump method.
+        Recursive function
+
+        :param prop: Property to transform
+        :return: Transformed property
+        """
         if not isinstance(prop, dict):
             if callable(prop):
                 return prop()
@@ -119,6 +174,11 @@ class Inertia:
         return prop_
 
     def _build_props(self) -> Union[Dict[str, Any], Any]:
+        """
+        Build the props for the page.
+        If the request is a partial render, it will only include the partial keys
+        :return: A dictionary with the props
+        """
         _props = self._props.copy()
 
         for key in list(_props.keys()):
@@ -132,6 +192,12 @@ class Inertia:
         return self._deep_transform_callables(_props)
 
     def _get_html_content(self, head: str, body: str) -> str:
+        """
+        Get the HTML content for the response
+        :param head: The content for the head tag
+        :param body: The content for the body tag
+        :return: The HTML content
+        """
         css_link = (
             f'<link rel="stylesheet" href="{self._inertia_files.css_file}">'
             if self._inertia_files.css_file
@@ -154,6 +220,10 @@ class Inertia:
                    """
 
     async def _render_ssr(self) -> HTMLResponse:
+        """
+        Render the page using SSR, calling the Inertia SSR server.
+        :return: The HTML response
+        """
         data = json.dumps(self._get_page_data(), cls=self._config.json_encoder)
         response = requests.post(
             f"{self._config.ssr_url}/render",
@@ -172,9 +242,19 @@ class Inertia:
         return HTMLResponse(content=html_content, status_code=200)
 
     def share(self, **props: Any) -> None:
+        """
+        Share props between functions. Useful to share props between dependencies/middlewares and routes
+        :param props: Props to share
+        """
         self._props.update(props)
 
-    def flash(self, message: str, category: str = "primary") -> None:
+    def flash(self, message: str, category: str) -> None:
+        """
+        Flash a message to the session
+        If flash messages are not enabled, it will raise a NotImplementedError
+        :param message: message to flash
+        :param category: category of the message
+        """
         if not self._config.use_flash_messages:
             raise NotImplementedError("Flash messages are not enabled")
 
@@ -186,12 +266,22 @@ class Inertia:
 
     @staticmethod
     def location(url: str) -> Response:
+        """
+        Return a response with a location header.
+        Useful to redirect to a different page (outside of this server)
+        :param url: URL to redirect to
+        :return: Response
+        """
         return Response(
             status_code=status.HTTP_409_CONFLICT,
             headers={"X-Inertia-Location": url},
         )
 
     def back(self) -> RedirectResponse:
+        """
+        Redirect back to the previous page
+        :return: RedirectResponse
+        """
         status_code = (
             status.HTTP_307_TEMPORARY_REDIRECT
             if self._request.method == "GET"
@@ -203,7 +293,16 @@ class Inertia:
 
     async def render(
         self, component: str, props: Optional[Dict[str, Any]] = None
-    ) -> HTMLResponse | JSONResponse:
+    ) -> InertiaResponse:
+        """
+        Render the page
+        If the request is an Inertia request, it will return a JSONResponse
+        If SSR is enabled, it will try to render the page using SSR.
+        If an error occurs, it will fall back to server-side template rendering
+        :param component: The component name to render
+        :param props: The props to pass to the component
+        :return: HTMLResponse or JSONResponse
+        """
         if self._config.use_flash_messages:
             self._props.update(
                 {self._config.flash_message_key: self._get_flashed_messages()}
@@ -242,7 +341,18 @@ class Inertia:
 def inertia_dependency_factory(
     config_: InertiaConfig,
 ) -> Callable[[Request], Inertia]:
+    """
+    Create a dependency for Inertia, passing the configuration
+    :param config_: InertiaConfig object
+    :return: Dependency
+    """
+
     def inertia_dependency(request: Request) -> Inertia:
+        """
+        Dependency for Inertia
+        :param request: FastAPI Request object
+        :return: Inertia object
+        """
         return Inertia(request, config_)
 
     return inertia_dependency
