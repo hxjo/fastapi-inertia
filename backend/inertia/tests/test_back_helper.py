@@ -6,7 +6,8 @@ from starlette.testclient import TestClient
 
 from ..inertia import (
     Inertia,
-    InertiaResponse, inertia_dependency_factory,
+    InertiaResponse,
+    inertia_dependency_factory,
 )
 
 from ..config import InertiaConfig
@@ -26,6 +27,7 @@ COMPONENT = "IndexPage"
 @app.get("/from-url", response_model=None)
 async def from_url(inertia: InertiaDep) -> InertiaResponse:
     return await inertia.render(COMPONENT, PROPS)
+
 
 @app.get("/", response_model=None)
 async def index(inertia: InertiaDep) -> RedirectResponse:

@@ -192,8 +192,14 @@ class Inertia:
         )
 
     def back(self) -> RedirectResponse:
-        status_code = status.HTTP_307_TEMPORARY_REDIRECT if self._request.method == "GET" else status.HTTP_303_SEE_OTHER
-        return RedirectResponse(url=self._request.headers["Referer"], status_code=status_code)
+        status_code = (
+            status.HTTP_307_TEMPORARY_REDIRECT
+            if self._request.method == "GET"
+            else status.HTTP_303_SEE_OTHER
+        )
+        return RedirectResponse(
+            url=self._request.headers["Referer"], status_code=status_code
+        )
 
     async def render(
         self, component: str, props: Optional[Dict[str, Any]] = None
