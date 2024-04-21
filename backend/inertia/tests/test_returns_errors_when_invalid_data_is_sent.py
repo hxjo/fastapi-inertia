@@ -30,7 +30,7 @@ app.add_exception_handler(
 )
 
 InertiaDep = Annotated[
-    Inertia, Depends(inertia_dependency_factory(InertiaConfig(use_flash_messages=True)))
+    Inertia, Depends(inertia_dependency_factory(InertiaConfig(use_flash_errors=True)))
 ]
 
 
@@ -67,7 +67,6 @@ def test_redirects_back_with_errors_on_inertia_request() -> None:
         assert response.json() == {
             "component": COMPONENT,
             "props": {
-                "messages": [],
                 "errors": {"message": "Input should be a valid string"},
             },
             "url": f"{client.base_url}/",
@@ -82,7 +81,6 @@ def test_redirects_back_with_errors_on_inertia_request_error_in_url() -> None:
         assert response.json() == {
             "component": COMPONENT,
             "props": {
-                "messages": [],
                 "errors": {
                     "pk": "Input should be a valid integer, unable to parse string as an integer"
                 },
@@ -108,7 +106,6 @@ def test_redirects_back_with_errors_in_error_bag_on_inertia_request() -> None:
         assert response.json() == {
             "component": COMPONENT,
             "props": {
-                "messages": [],
                 "errors": {
                     error_bag: {"message": "Input should be a valid string"},
                 },

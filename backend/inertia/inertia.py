@@ -318,7 +318,11 @@ class Inertia:
             self._props.update(
                 {self._config.flash_message_key: self._get_flashed_messages()}
             )
-            self._props.update({"errors": self._get_flashed_errors()})
+
+        if self._config.use_flash_errors:
+            self._props.update(
+                {self._config.flash_error_key: self._get_flashed_errors()}
+            )
 
         self._component = component
         self._props.update(props or {})
