@@ -21,5 +21,4 @@ jobs:
         working-directory: ./backend
         run: uv pip install -r requirements.dev.in
       - name: Run tests
-        working-directory: ./backend
         run: pytest --cov-config=.coveragerc --cov=inertia --cov-report=term-missing --cov-fail-under=99 inertia/tests

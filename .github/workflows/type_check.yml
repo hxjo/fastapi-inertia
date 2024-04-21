@@ -21,5 +21,4 @@ jobs:
         working-directory: ./backend
         run: uv pip install -r requirements.dev.in
       - name: Run type check
-        working-directory: ./backend
         run: mypy .
