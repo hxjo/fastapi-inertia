@@ -1,3 +1,4 @@
+import pytest
 from fastapi import FastAPI, Depends
 from typing import Annotated, cast
 
@@ -24,6 +25,12 @@ InertiaDep = Annotated[
         inertia_dependency_factory(
             InertiaConfig(use_flash_messages=True, flash_message_key=FLASH_MESSAGE_KEY)
         )
+    ),
+]
+InvalidInertiaDep = Annotated[
+    Inertia,
+    Depends(
+        inertia_dependency_factory(InertiaConfig(flash_message_key=FLASH_MESSAGE_KEY))
     ),
 ]
 
@@ -71,6 +78,11 @@ async def other_page(inertia: InertiaDep) -> InertiaResponse:
     )
 
 
+@app.get("/invalid", response_model=None)
+async def invalid_inertia_page(inertia: InvalidInertiaDep) -> None:
+    inertia.flash(message="hello from flash message", category="info")
+
+
 def test_flash_message_is_included_from_dependency() -> None:
     with TestClient(app) as client:
         response = client.get("/", headers={"X-Inertia": "true"})
@@ -114,3 +126,9 @@ def test_flash_message_is_persisted_on_redirect() -> None:
             "url": f"{client.base_url}/redirect",
             "version": "1.0",
         }
+
+
+def test_invalid_inertia_dependency_raises() -> None:
+    with TestClient(app) as client:
+        with pytest.raises(NotImplementedError):
+            client.get("/invalid", headers={"X-Inertia": "true"})
