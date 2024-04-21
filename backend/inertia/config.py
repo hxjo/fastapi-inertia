@@ -19,4 +19,6 @@ class InertiaConfig:
     ssr_enabled: bool = False
     use_typescript: bool = False
     use_flash_messages: bool = False
+    use_flash_errors: bool = False
     flash_message_key: str = "messages"
+    flash_error_key: str = "errors"

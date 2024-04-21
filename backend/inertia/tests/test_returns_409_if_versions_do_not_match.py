@@ -3,18 +3,21 @@ from typing import Annotated
 
 from starlette.testclient import TestClient
 
-from ..inertia import (
+from inertia import (
     Inertia,
     inertia_dependency_factory,
     InertiaResponse,
+    InertiaConfig,
+    InertiaVersionConflictException,
+    inertia_version_conflict_exception_handler,
 )
-
-from ..config import InertiaConfig
-from ..exceptions import InertiaVersionConflictException, inertia_exception_handler
 
 
 app = FastAPI()
-app.add_exception_handler(InertiaVersionConflictException, inertia_exception_handler)  # type: ignore[arg-type]
+app.add_exception_handler(
+    InertiaVersionConflictException,
+    inertia_version_conflict_exception_handler,  # type: ignore[arg-type]
+)
 
 InertiaDep = Annotated[Inertia, Depends(inertia_dependency_factory(InertiaConfig()))]
 

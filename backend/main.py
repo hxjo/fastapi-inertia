@@ -3,13 +3,15 @@ from typing import Annotated
 
 from fastapi import FastAPI, Depends
 from fastapi.responses import RedirectResponse
+from fastapi.exceptions import RequestValidationError
 from starlette.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
-from .inertia import (
+from inertia import (
     InertiaResponse,
     Inertia,
     inertia_dependency_factory,
-    inertia_exception_handler,
+    inertia_version_conflict_exception_handler,
+    inertia_request_validation_exception_handler,
     InertiaVersionConflictException,
     InertiaConfig,
     lazy,
@@ -17,7 +19,14 @@ from .inertia import (
 
 app = FastAPI()
 app.add_middleware(SessionMiddleware, secret_key="secret_key")
-app.add_exception_handler(InertiaVersionConflictException, inertia_exception_handler)  # type: ignore[arg-type]
+app.add_exception_handler(
+    InertiaVersionConflictException,
+    inertia_version_conflict_exception_handler,  # type: ignore[arg-type]
+)
+app.add_exception_handler(
+    RequestValidationError,
+    inertia_request_validation_exception_handler,  # type: ignore[arg-type]
+)
 
 
 manifest_json = os.path.join(
@@ -26,7 +35,8 @@ manifest_json = os.path.join(
 inertia_config = InertiaConfig(
     manifest_json_path=manifest_json,
     environment="development",
-    ssr_enabled=True,
+    use_flash_messages=True,
+    ssr_enabled=False,
 )
 InertiaDep = Annotated[Inertia, Depends(inertia_dependency_factory(inertia_config))]
 
@@ -66,3 +76,8 @@ async def other_page(inertia: InertiaDep) -> RedirectResponse:
 async def other_page_with_flashed_data(inertia: InertiaDep) -> InertiaResponse:
     inertia.flash("hello from index3 (through flash)", category="message")
     return await inertia.render("OtherPage")
+
+
+@app.post("/some-form", response_model=None)
+async def some_form(inertia: InertiaDep) -> RedirectResponse:
+    return inertia.back()

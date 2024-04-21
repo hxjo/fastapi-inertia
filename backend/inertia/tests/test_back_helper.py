@@ -4,13 +4,7 @@ from typing import Annotated
 from starlette.responses import RedirectResponse
 from starlette.testclient import TestClient
 
-from ..inertia import (
-    Inertia,
-    InertiaResponse,
-    inertia_dependency_factory,
-)
-
-from ..config import InertiaConfig
+from inertia import Inertia, InertiaResponse, inertia_dependency_factory, InertiaConfig
 
 
 app = FastAPI()

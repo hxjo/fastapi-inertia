@@ -5,13 +5,8 @@ from pydantic import BaseModel
 from starlette.testclient import TestClient
 
 from .utils import get_stripped_html
-from ..inertia import (
-    Inertia,
-    inertia_dependency_factory,
-    InertiaResponse,
-)
+from inertia import Inertia, inertia_dependency_factory, InertiaResponse, InertiaConfig
 
-from ..config import InertiaConfig
 
 app = FastAPI()
 
