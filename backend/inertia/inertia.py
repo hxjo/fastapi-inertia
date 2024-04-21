@@ -1,10 +1,11 @@
 import logging
 
-from fastapi import Request
+from fastapi import Request, Response, status
 from fastapi.responses import JSONResponse, HTMLResponse
 from typing import Any, Callable, Dict, Optional, TypeVar, TypedDict, Union, cast
 import json
 import requests
+from pydantic import BaseModel
 
 from .config import InertiaConfig
 from .exceptions import InertiaVersionConflictException
@@ -104,7 +105,11 @@ class Inertia:
         cls, prop: Union[Callable[..., Any], Dict[str, Any]]
     ) -> Any:
         if not isinstance(prop, dict):
-            return prop() if callable(prop) else prop
+            if callable(prop):
+                return prop()
+            if isinstance(prop, BaseModel):
+                return prop.model_dump()
+            return prop
 
         prop_ = prop.copy()
         for key in list(prop_.keys()):
@@ -177,6 +182,13 @@ class Inertia:
 
         message_: FlashMessage = {"message": message, "category": category}
         self._request.session["_messages"].append(message_)
+
+    @staticmethod
+    def location(url: str) -> Response:
+        return Response(
+            status_code=status.HTTP_409_CONFLICT,
+            headers={"X-Inertia-Location": url},
+        )
 
     async def render(
         self, component: str, props: Optional[Dict[str, Any]] = None

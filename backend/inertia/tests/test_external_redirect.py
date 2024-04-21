@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Response
 from typing import Annotated
 
 from starlette.testclient import TestClient
@@ -6,7 +6,6 @@ from starlette.testclient import TestClient
 from ..inertia import (
     Inertia,
     inertia_dependency_factory,
-    InertiaResponse,
 )
 
 from ..config import InertiaConfig
@@ -24,16 +23,16 @@ PROPS = {
 
 COMPONENT = "IndexPage"
 
+EXTERNAL_URL = "https://some-external-url.com/"
+
 
 @app.get("/", response_model=None)
-async def index(inertia: InertiaDep) -> InertiaResponse:
-    return await inertia.render(COMPONENT, PROPS)
+async def index(inertia: InertiaDep) -> Response:
+    return inertia.location(EXTERNAL_URL)
 
 
-def test_returns_409_if_versions_do_not_match() -> None:
+def test_returns_409_with_appropriate_inertia_location() -> None:
     with TestClient(app) as client:
-        response = client.get(
-            "/", headers={"X-Inertia-Version": str(float(InertiaConfig.version) + 1)}
-        )
+        response = client.get("/")
         assert response.status_code == 409
-        assert response.headers.get("X-Inertia-Location") == f"{client.base_url}/"
+        assert response.headers.get("X-Inertia-Location") == EXTERNAL_URL

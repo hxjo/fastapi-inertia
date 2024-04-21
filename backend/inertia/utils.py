@@ -1,12 +1,7 @@
 from json import JSONEncoder
 
 from fastapi.encoders import jsonable_encoder
-from pydantic import BaseModel
 from typing import Callable, Any
-
-
-def model_to_dict(model: BaseModel) -> dict[str, Any]:
-    return model.model_dump(exclude={"password"})
 
 
 class InertiaJsonEncoder(JSONEncoder):
@@ -14,9 +9,6 @@ class InertiaJsonEncoder(JSONEncoder):
         super().__init__(*args, **kwargs)
 
     def encode(self, value: Any) -> Any:
-        if isinstance(value, BaseModel):
-            return model_to_dict(value)
-
         return jsonable_encoder(value)
 
 

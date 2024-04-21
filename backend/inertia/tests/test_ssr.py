@@ -2,16 +2,17 @@ import json
 import os
 from unittest.mock import patch, MagicMock
 from fastapi import FastAPI, Depends
-from typing import Annotated
+from typing import Annotated, cast
 
 from starlette.testclient import TestClient
 
 from ..inertia import (
     Inertia,
     inertia_dependency_factory,
-    InertiaConfig,
     InertiaResponse,
 )
+from ..config import InertiaConfig
+
 from .utils import get_stripped_html
 
 app = FastAPI()
@@ -86,7 +87,7 @@ def test_returns_html(post_function: MagicMock) -> None:
             url=f"{client.base_url}/",
             script_asset_url=js_file,
             css_asset_url=css_file,
-            body_content=RETURNED_JSON["body"],
+            body_content=cast(str, RETURNED_JSON["body"]),
             additional_head_content="\n".join(RETURNED_JSON["head"]),
         )
 

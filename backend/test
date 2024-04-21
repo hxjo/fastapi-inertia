@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+pytest --cov-config=.coveragerc --cov=inertia --cov-report=term-missing inertia/tests
