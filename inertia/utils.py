@@ -48,7 +48,7 @@ class LazyProp:
         return self.prop() if callable(self.prop) else self.prop
 
 
-def lazy(prop: Union[Callable[[], Any],Any]) -> LazyProp:
+def lazy(prop: Union[Callable[[], Any], Any]) -> LazyProp:
     """
     Create a lazy property
     :param prop: The property to evaluate, can be a callable or a value
