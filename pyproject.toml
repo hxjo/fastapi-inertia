@@ -15,9 +15,11 @@ classifiers = [
     "Framework :: FastAPI :: 0.110",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
+
 packages = [
-  { include = "inertia" },
+    { include = "inertia"}
 ]
+exclude = ["inertia/tests/**/*"]
 
 [tool.poetry.dependencies]
 python = ">=3.9, <=3.12"
@@ -45,4 +47,3 @@ build-backend = "poetry.core.masonry.api"
 [tool.mypy]
 strict = true
 check_untyped_defs = true
-ignore_missing_imports = true
