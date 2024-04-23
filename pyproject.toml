@@ -1,13 +1,13 @@
 [tool.poetry]
 name = "fastapi-inertia"
-version = "0.1.1"
+version = "0.1.2"
 description = "An implementation of the Inertia protocol for FastAPI."
 authors = ["Hugo Mortreux <70602545+hxjo@users.noreply.github.com>"]
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/hxjo/fastapi-inertia"
 homepage = "https://github.com/hxjo/fastapi-inertia"
-keywords = ["inertia", "inertiajs", "fastapi"]
+keywords = ["inertia", "inertiajs", "fastapi", "python"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
@@ -22,11 +22,8 @@ packages = [
 exclude = ["inertia/tests/**/*"]
 
 [tool.poetry.dependencies]
-python = ">=3.9, <=3.12"
+python = ">=3.9"
 fastapi = "^0.110.2"
-
-[tool.poetry.extras]
-ssr = ["requests"]
 
 [tool.poetry.group.dev.dependencies]
 uvicorn = "^0.29.0"
