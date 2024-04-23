@@ -59,7 +59,7 @@ To use it, you first need to set up the dependency, with your desired configurat
 ```python
 from fastapi import Depends
 from typing import Annotated
-from fastapi_inertia import InertiaConfig, inertia_dependency_factory, Inertia
+from inertia import InertiaConfig, inertia_dependency_factory, Inertia
 
 inertia_config = InertiaConfig(
         # Your desired configuration
@@ -81,7 +81,7 @@ To render a page, you can use the `render` method of the `Inertia` class. It tak
 `main.py`
 ```python
 from fastapi import FastAPI, Depends
-from fastapi_inertia import InertiaResponse, InertiaVersionConflictException, inertia_version_conflict_exception_handler
+from inertia import InertiaResponse, InertiaVersionConflictException, inertia_version_conflict_exception_handler
 from inertia_dependency import InertiaDependency
 
 app = FastAPI()
@@ -127,7 +127,7 @@ This is useful, for example, to add a user to all your pages that expects your u
 `main.py`
 ```python
 from fastapi import FastAPI, Depends
-from fastapi_inertia import InertiaResponse, InertiaVersionConflictException, inertia_version_conflict_exception_handler
+from inertia import InertiaResponse, InertiaVersionConflictException, inertia_version_conflict_exception_handler
 from inertia_dependency import InertiaDependency
 
 app = FastAPI()
@@ -158,7 +158,7 @@ You need to have the `SessionMiddleware` enabled in your application to use this
 ```python
 from fastapi import FastAPI, Depends
 from starlette.middleware.sessions import SessionMiddleware
-from fastapi_inertia import InertiaResponse, InertiaVersionConflictException, inertia_version_conflict_exception_handler
+from inertia import InertiaResponse, InertiaVersionConflictException, inertia_version_conflict_exception_handler
 from inertia_dependency import InertiaDependency
 
 app = FastAPI()
@@ -189,7 +189,7 @@ from pydantic import BaseModel, model_validator
 from typing import Any
 from fastapi.exceptions import RequestValidationError
 from starlette.middleware.sessions import SessionMiddleware
-from fastapi_inertia import InertiaResponse, InertiaVersionConflictException, inertia_version_conflict_exception_handler, inertia_request_validation_exception_handler
+from inertia import InertiaResponse, InertiaVersionConflictException, inertia_version_conflict_exception_handler, inertia_request_validation_exception_handler
 from inertia_dependency import InertiaDependency
 
 app = FastAPI()
@@ -220,7 +220,7 @@ It takes one argument: the URL to redirect to.
 `main.py`
 ```python
 from fastapi import FastAPI, Depends
-from fastapi_inertia import InertiaResponse, InertiaVersionConflictException, inertia_version_conflict_exception_handler
+from inertia import InertiaResponse, InertiaVersionConflictException, inertia_version_conflict_exception_handler
 from inertia_dependency import InertiaDependency
 
 app = FastAPI()
@@ -241,7 +241,7 @@ That ways, it will trigger a new GET request to the referer URL.
 `main.py`
 ```python
 from fastapi import FastAPI, Depends
-from fastapi_inertia import InertiaResponse, InertiaVersionConflictException, inertia_version_conflict_exception_handler
+from inertia import InertiaResponse, InertiaVersionConflictException, inertia_version_conflict_exception_handler
 from inertia_dependency import InertiaDependency
 
 app = FastAPI()
@@ -258,7 +258,7 @@ You also need to have set the `manifest_json_path` to the path of your `manifest
 You need to have the `requests` package installed to use this feature.
 This can be done through the following command:
 ```bash
-pip install fastapi-inertia[ssr]
+pip install requests
 ```
 
 

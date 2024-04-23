@@ -739,10 +739,7 @@ typing-extensions = {version = ">=4.0", markers = "python_version < \"3.11\""}
 [package.extras]
 standard = ["colorama (>=0.4)", "httptools (>=0.5.0)", "python-dotenv (>=0.13)", "pyyaml (>=5.1)", "uvloop (>=0.14.0,!=0.15.0,!=0.15.1)", "watchfiles (>=0.13)", "websockets (>=10.4)"]
 
-[extras]
-ssr = []
-
 [metadata]
 lock-version = "2.0"
-python-versions = ">=3.9, <=3.12"
-content-hash = "02ef98e948330799dabb911146404ec97238e33d148be3f9c07e5b1150086b6d"
+python-versions = ">=3.9"
+content-hash = "b5a599e5fb7d90794434913e7f4379c83f121fa4c83a0a865b36dc5d3ad46032"
