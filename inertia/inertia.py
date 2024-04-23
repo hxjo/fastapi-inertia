@@ -14,7 +14,7 @@ from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
-InertiaResponse = HTMLResponse | JSONResponse
+InertiaResponse = Union[HTMLResponse, JSONResponse]
 
 T = TypeVar("T")
 

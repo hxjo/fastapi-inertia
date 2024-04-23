@@ -7,14 +7,17 @@ on:
     branches: [ main ]
 
 jobs:
-  check:
+  test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python 3.12
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
-          python-version: 3.12
+          python-version: ${{ matrix.python-version }}
       - run: pip install poetry
       - run: poetry config virtualenvs.create false
       - name: Install dependencies
