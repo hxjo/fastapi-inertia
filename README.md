@@ -1,4 +1,25 @@
 # Inertia.js FastAPI Adapter
+<!-- TOC -->
+* [Inertia.js FastAPI Adapter](#inertiajs-fastapi-adapter)
+  * [Installation](#installation)
+  * [Configuration](#configuration)
+  * [Examples](#examples)
+  * [Usage](#usage)
+    * [Set up the dependency](#set-up-the-dependency)
+    * [Rendering a page](#rendering-a-page)
+    * [Rendering assets](#rendering-assets)
+    * [Sharing data](#sharing-data)
+    * [Flash messages](#flash-messages)
+    * [Flash errors](#flash-errors)
+    * [Redirect to an external URL](#redirect-to-an-external-url)
+    * [Redirect back](#redirect-back)
+    * [Enable SSR](#enable-ssr)
+  * [Frontend documentation](#frontend-documentation)
+    * [For a classic build](#for-a-classic-build)
+    * [For a SSR build](#for-a-ssr-build)
+    * [Performance note](#performance-note)
+<!-- TOC -->
+
 ## Installation
 You can install the package via pip:
 ```bash
@@ -10,20 +31,20 @@ pip install fastapi-inertia
 You can configure the adapter by passing a `InertiaConfig` object to the `Inertia` class. 
 The following options are available:
 
-| key                | default                | options                                 | description                                                                                                                      |
-|--------------------|------------------------|-----------------------------------------|----------------------------------------------------------------------------------------------------------------------------------|
-| environment        | development            | development,production                  | The environment to use                                                                                                           |
-| version            | 1.0.0                  | Any valid string                        | The version of your server                                                                                                       |
-| json_encoder       | InertiaJsonEncoder     | Any class that extends json.JSONEncoder | The JSON encoder used to encode page data when HTML is returned                                                                  |
-| manifest_json_path | ""                     | Any valid path                          | The path to the manifest.json file. Needed in production                                                                         |
-| dev_url            | http://localhost:5173  | Any valid url                           | The URL to the development server                                                                                                |
-| ssr_url            | http://localhost:13714 | Any valid url                           | The URL to the SSR server                                                                                                        |
-| ssr_enabled        | False                  | True,False                              | Whether to enable SSR. You need to install the `requests` package, to have set the manifest_json_path and started the SSR server |
-| use_typescript     | False                  | True,False                              | Whether to use TypeScript                                                                                                        |
-| use_flash_messages | False                  | True,False                              | Whether to use flash messages. You need to use Starlette's SessionMiddleware to use this feature                                 |
-| flash_message_key  | messages               | Any valid string                        | The key to use for flash messages                                                                                                |
-| use_flash_errors   | False                  | True,False                              | Whether to use flash errors                                                                                                      |
-| flash_error_key    | errors                 | Any valid string                        | The key to use for flash errors                                                                                                  |
+| key                | default                | options                                 | description                                                                                                                                     |
+|--------------------|------------------------|-----------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
+| environment        | development            | development,production                  | The environment to use                                                                                                                          |
+| version            | 1.0.0                  | Any valid string                        | The version of your server                                                                                                                      |
+| json_encoder       | InertiaJsonEncoder     | Any class that extends json.JSONEncoder | The JSON encoder used to encode page data when HTML is returned                                                                                 |
+| manifest_json_path | ""                     | Any valid path                          | The path to the manifest.json file. Needed in production                                                                                        |
+| dev_url            | http://localhost:5173  | Any valid url                           | The URL to the development server                                                                                                               |
+| ssr_url            | http://localhost:13714 | Any valid url                           | The URL to the SSR server                                                                                                                       |
+| ssr_enabled        | False                  | True,False                              | Whether to [enable SSR](#enable-ssr). You need to install the `requests` package, to have set the manifest_json_path and started the SSR server |
+| use_typescript     | False                  | True,False                              | Whether to use TypeScript                                                                                                                       |
+| use_flash_messages | False                  | True,False                              | Whether to use [flash messages](#flash-messages). You need to use Starlette's SessionMiddleware to use this feature                             |
+| flash_message_key  | messages               | Any valid string                        | The key to use for [flash errors](#flash-errors)                                                                                                |
+| use_flash_errors   | False                  | True,False                              | Whether to use flash errors                                                                                                                     |
+| flash_error_key    | errors                 | Any valid string                        | The key to use for flash errors                                                                                                                 |
 
 ## Examples
 You can see different full examples in the [following repository](https://github.com/hxjo/fastapi-inertia-examples).
@@ -229,4 +250,186 @@ app.add_exception_handler(InertiaVersionConflictException, inertia_version_confl
 @app.get('/', response_model=None)
 async def index(inertia: InertiaDependency) -> InertiaResponse:
     return inertia.back()
+```
+
+### Enable SSR
+To enable SSR, you need to set `ssr_enabled` to `True` in your configuration.
+You also need to have set the `manifest_json_path` to the path of your `manifest.json` file.
+You need to have the `requests` package installed to use this feature.
+This can be done through the following command:
+```bash
+pip install fastapi-inertia[ssr]
+```
+
+
+## Frontend documentation
+There is no particular caveats to keep in mind when using this adapter.
+However, here's an example of how you would set up your frontend to work with this adapter.
+
+### For a classic build
+> [!NOTE]   
+> To build the project, you can run the `vite build` command
+
+
+`vite.config.js`
+```javascript
+import { fileURLToPath } from "node:url";
+import { dirname } from "path";
+
+import { defineConfig } from "vite";
+import vue from "@vitejs/plugin-vue";
+
+const projectRoot = dirname(fileURLToPath(import.meta.url));
+// https://vitejs.dev/config/
+export default defineConfig({
+  plugins: [vue()],
+  resolve: {
+    alias: {
+      "@": `${projectRoot}/src`,
+    },
+  },
+  build: {
+    manifest: "manifest.json",
+    outDir: "dist",
+    rollupOptions: {
+      input: "src/main.js",
+    },
+  },
+});
+```
+
+`main.js`
+```javascript
+import { createApp, h } from "vue";
+import { createInertiaApp } from "@inertiajs/vue3";
+
+createInertiaApp({
+  resolve: (name) => {
+    const pages = import.meta.glob("./Pages/**/*.vue", { eager: true });
+    return pages[`./Pages/${name}.vue`];
+  },
+  setup({ el, App, props, plugin }) {
+    createApp({ render: () => h(App, props) })
+      .use(plugin)
+      .mount(el);
+  },
+});
+```
+
+### For a SSR build
+> [!NOTE]   
+> To build the project, you can run the `vite build` and `vite build --ssr` commands  
+> To serve the Inertia SSR server, you can run the `node dist/ssr/ssr.js` command
+
+
+`vite.config.js`
+```javascript
+import { fileURLToPath } from "node:url";
+import { dirname } from "path";
+
+import { defineConfig } from "vite";
+import vue from "@vitejs/plugin-vue";
+
+const projectRoot = dirname(fileURLToPath(import.meta.url));
+// https://vitejs.dev/config/
+export default defineConfig(({ isSsrBuild }) => ({
+  plugins: [vue()],
+  resolve: {
+    alias: {
+      "@": `${projectRoot}/src`,
+    },
+  },
+  build: {
+    manifest: isSsrBuild ? false : "manifest.json",
+    outDir: isSsrBuild ? "dist/ssr" : "dist/client",
+    rollupOptions: {
+      input: isSsrBuild ? "src/ssr.js" : "src/main.js",
+    },
+  },
+}));
+```
+
+`main.js`
+```javascript
+import { createSSRApp, h } from "vue";
+import { createInertiaApp } from "@inertiajs/vue3";
+
+createInertiaApp({
+  resolve: (name) => {
+    const pages = import.meta.glob("./Pages/**/*.vue", { eager: true });
+    return pages[`./Pages/${name}.vue`];
+  },
+  setup({ el, App, props, plugin }) {
+    createSSRApp({ render: () => h(App, props) })
+      .use(plugin)
+      .mount(el);
+  },
+});
+```
+
+`ssr.js`
+```javascript
+import { createInertiaApp } from "@inertiajs/vue3";
+import createServer from "@inertiajs/vue3/server";
+import { renderToString } from "@vue/server-renderer";
+import { createSSRApp, h } from "vue";
+
+createServer((page) =>
+  createInertiaApp({
+    page,
+    render: renderToString,
+    resolve: (name) => {
+      const pages = import.meta.glob("./Pages/**/*.vue", { eager: true });
+      return pages[`./Pages/${name}.vue`];
+    },
+    setup({ App, props, plugin }) {
+      return createSSRApp({
+        render: () => h(App, props),
+      }).use(plugin);
+    },
+  }),
+);
+```
+
+### Performance note
+With the implementation proposed above, you'll be loading the whole page on the first load.
+This is because everything will be bundled in the same file.
+If you want to split your code, you can use the following implementation.  
+
+`helper.js` (taken from [laravel vite plugin inertia helpers](https://github.com/laravel/vite-plugin/blob/1.x/src/inertia-helpers/index.ts))
+```javascript
+export async function resolvePageComponent<T>(path: string|string[], pages: Record<string, Promise<T> | (() => Promise<T>)>): Promise<T> {
+    for (const p of (Array.isArray(path) ? path : [path])) {
+        const page = pages[p]
+
+        if (typeof page === 'undefined') {
+            continue
+        }
+
+        return typeof page === 'function' ? page() : page
+    }
+
+    throw new Error(`Page not found: ${path}`)
+}
+```
+
+
+`main.js`
+```javascript
+import { createApp, h } from "vue";
+import { createInertiaApp } from "@inertiajs/vue3";
+import { resolvePageComponent } from "@/helper.js";
+
+createInertiaApp({
+  resolve: (name) => {
+    return resolvePageComponent(`./Pages/${name}.vue`,
+      import.meta.glob("./Pages/**/*.vue"),
+    )
+  },
+  setup({ el, App, props, plugin }) {
+    createApp({ render: () => h(App, props) })
+      .use(plugin)
+      .mount(el);
+  },
+});
 ```
