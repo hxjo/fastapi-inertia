@@ -1,7 +1,7 @@
 from json import JSONEncoder
 
 from fastapi.encoders import jsonable_encoder
-from typing import Callable, Any
+from typing import Callable, Any, Union
 
 
 class InertiaJsonEncoder(JSONEncoder):
@@ -33,7 +33,7 @@ class LazyProp:
     Lazy property that can be used to defer the evaluation of a property
     """
 
-    def __init__(self, prop: Callable[[], Any] | Any):
+    def __init__(self, prop: Union[Callable[[], Any], Any]):
         """
         Constructor
         :param prop: Property to evaluate, can be a callable or a value
@@ -48,7 +48,7 @@ class LazyProp:
         return self.prop() if callable(self.prop) else self.prop
 
 
-def lazy(prop: Callable[[], Any] | Any) -> LazyProp:
+def lazy(prop: Union[Callable[[], Any],Any]) -> LazyProp:
     """
     Create a lazy property
     :param prop: The property to evaluate, can be a callable or a value
