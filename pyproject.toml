@@ -23,7 +23,7 @@ exclude = ["inertia/tests/**/*"]
 
 [tool.poetry.dependencies]
 python = ">=3.9"
-fastapi = "^0.110.2"
+fastapi = "^0.111.0"
 
 [tool.poetry.group.dev.dependencies]
 uvicorn = "^0.29.0"
