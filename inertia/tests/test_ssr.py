@@ -9,7 +9,7 @@ from starlette.testclient import TestClient
 
 from inertia import Inertia, inertia_dependency_factory, InertiaResponse, InertiaConfig
 
-from inertia.tests.utils import get_stripped_html
+from .utils import get_stripped_html
 
 app = FastAPI()
 manifest_json = os.path.join(os.path.dirname(__file__), "dummy_manifest_js.json")
@@ -25,14 +25,11 @@ InertiaDep = Annotated[
         )
     ),
 ]
-PROPS = {
-    "message": "hello from index",
-    "created_at": datetime.now()
-}
+PROPS = {"message": "hello from index", "created_at": datetime.now()}
 
 EXPECTED_PROPS = {
     **PROPS,
-    "created_at": cast(datetime, PROPS["created_at"]).isoformat()
+    "created_at": cast(datetime, PROPS["created_at"]).isoformat(),
 }
 
 COMPONENT = "IndexPage"

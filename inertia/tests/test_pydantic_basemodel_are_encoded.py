@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 from starlette.testclient import TestClient
 
-from inertia.tests.utils import get_stripped_html
+from .utils import get_stripped_html
 from inertia import Inertia, inertia_dependency_factory, InertiaResponse, InertiaConfig
 
 
@@ -21,16 +21,12 @@ class Person(BaseModel):
 
 
 PROPS = {
-    "person": {
-        "name": "John Doe",
-        "age": 42,
-        "created_at": datetime.now()
-    },
+    "person": {"name": "John Doe", "age": 42, "created_at": datetime.now()},
 }
 EXPECTED_PROPS = {
     "person": {
         **PROPS["person"],
-        "created_at": cast(datetime, PROPS["person"]["created_at"]).isoformat()
+        "created_at": cast(datetime, PROPS["person"]["created_at"]).isoformat(),
     }
 }
 
@@ -43,7 +39,14 @@ async def index(inertia: InertiaDep) -> InertiaResponse:
     age = PROPS["person"]["age"]
     created_at = PROPS["person"]["created_at"]
     return await inertia.render(
-        COMPONENT, {"person": Person(name=cast(str, name), age=cast(int, age), created_at=created_at)}
+        COMPONENT,
+        {
+            "person": Person(
+                name=cast(str, name),
+                age=cast(int, age),
+                created_at=cast(datetime, created_at),
+            )
+        },
     )
 
 

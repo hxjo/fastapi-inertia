@@ -259,12 +259,12 @@ class Inertia:
         :return: The JSON response
         """
         return JSONResponse(
-                content=self._get_page_data(),
-                headers={
-                    "Vary": "Accept",
-                    "X-Inertia": "true",
-                },
-            )
+            content=self._get_page_data(),
+            headers={
+                "Vary": "Accept",
+                "X-Inertia": "true",
+            },
+        )
 
     def share(self, **props: Any) -> None:
         """
