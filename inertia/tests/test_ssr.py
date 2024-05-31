@@ -1,5 +1,6 @@
 import json
 import os
+from datetime import datetime
 from unittest.mock import patch, MagicMock
 from fastapi import FastAPI, Depends
 from typing import Annotated, cast
@@ -8,7 +9,7 @@ from starlette.testclient import TestClient
 
 from inertia import Inertia, inertia_dependency_factory, InertiaResponse, InertiaConfig
 
-from .utils import get_stripped_html
+from inertia.tests.utils import get_stripped_html
 
 app = FastAPI()
 manifest_json = os.path.join(os.path.dirname(__file__), "dummy_manifest_js.json")
@@ -26,6 +27,12 @@ InertiaDep = Annotated[
 ]
 PROPS = {
     "message": "hello from index",
+    "created_at": datetime.now()
+}
+
+EXPECTED_PROPS = {
+    **PROPS,
+    "created_at": cast(datetime, PROPS["created_at"]).isoformat()
 }
 
 COMPONENT = "IndexPage"
@@ -44,7 +51,7 @@ def test_calls_inertia_render(post_function: MagicMock) -> None:
             f"{SSR_URL}/render",
             json={
                 "component": COMPONENT,
-                "props": PROPS,
+                "props": EXPECTED_PROPS,
                 "url": f"{client.base_url}/",
                 "version": "1.0",
             },
@@ -69,7 +76,7 @@ def test_returns_html(post_function: MagicMock) -> None:
             f"{SSR_URL}/render",
             json={
                 "component": COMPONENT,
-                "props": PROPS,
+                "props": EXPECTED_PROPS,
                 "url": f"{client.base_url}/",
                 "version": "1.0",
             },
@@ -79,7 +86,7 @@ def test_returns_html(post_function: MagicMock) -> None:
         assert response.headers.get("content-type").split(";")[0] == "text/html"
         assert response.text.strip() == get_stripped_html(
             component_name=COMPONENT,
-            props=PROPS,
+            props=EXPECTED_PROPS,
             url=f"{client.base_url}/",
             script_asset_url=js_file,
             css_asset_url=css_file,
@@ -103,7 +110,7 @@ def test_fallback_to_classic_if_render_errors(post_function: MagicMock) -> None:
             f"{SSR_URL}/render",
             json={
                 "component": COMPONENT,
-                "props": PROPS,
+                "props": EXPECTED_PROPS,
                 "url": f"{client.base_url}/",
                 "version": "1.0",
             },
@@ -113,7 +120,7 @@ def test_fallback_to_classic_if_render_errors(post_function: MagicMock) -> None:
         assert response.headers.get("content-type").split(";")[0] == "text/html"
         assert response.text.strip() == get_stripped_html(
             component_name=COMPONENT,
-            props=PROPS,
+            props=EXPECTED_PROPS,
             url=f"{client.base_url}/",
             script_asset_url=js_file,
             css_asset_url=css_file,

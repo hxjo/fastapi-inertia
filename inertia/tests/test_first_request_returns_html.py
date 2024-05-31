@@ -7,7 +7,7 @@ from starlette.testclient import TestClient
 
 from inertia import Inertia, inertia_dependency_factory, InertiaResponse, InertiaConfig
 
-from .utils import get_stripped_html
+from inertia.tests.utils import get_stripped_html
 
 app = FastAPI()
 manifest_json = os.path.join(os.path.dirname(__file__), "dummy_manifest_js.json")

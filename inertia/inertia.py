@@ -174,7 +174,7 @@ class Inertia:
             if callable(prop):
                 return prop()
             if isinstance(prop, BaseModel):
-                return prop.model_dump()
+                return json.loads(prop.model_dump_json())
             return prop
 
         prop_ = prop.copy()
@@ -253,6 +253,19 @@ class Inertia:
 
         return HTMLResponse(content=html_content, status_code=200)
 
+    def _render_json(self) -> JSONResponse:
+        """
+        Render the page using JSON
+        :return: The JSON response
+        """
+        return JSONResponse(
+                content=self._get_page_data(),
+                headers={
+                    "Vary": "Accept",
+                    "X-Inertia": "true",
+                },
+            )
+
     def share(self, **props: Any) -> None:
         """
         Share props between functions. Useful to share props between dependencies/middlewares and routes
@@ -329,13 +342,7 @@ class Inertia:
         self._props.update(props or {})
 
         if "X-Inertia" in self._request.headers:
-            return JSONResponse(
-                content=self._get_page_data(),
-                headers={
-                    "Vary": "Accept",
-                    "X-Inertia": "true",
-                },
-            )
+            return self._render_json()
 
         if self._config.ssr_enabled:
             try:
