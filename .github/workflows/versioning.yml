@@ -1,0 +1,47 @@
+name: Check Package Version
+
+on:
+  push:
+    branches:
+      - '**'
+      - '!main'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout current branch
+      uses: actions/checkout@v2
+      with:
+        ref: ${{ github.head_ref }}
+
+    - name: Get version from current branch
+      id: get_current_version
+      run: |
+        current_version=$(grep -Po '(?<=^version = ")[^"]*' pyproject.toml)
+        echo "current_version=$current_version" >> $GITHUB_ENV
+
+    - name: Checkout main branch
+      uses: actions/checkout@v2
+      with:
+        ref: main
+        path: main_branch
+
+    - name: Get version from main branch
+      id: get_main_version
+      run: |
+        main_version=$(grep -Po '(?<=^version = ")[^"]*' main_branch/pyproject.toml)
+        echo "main_version=$main_version" >> $GITHUB_ENV
+
+    - name: Compare versions
+      run: |
+        if [ "$current_version" = "$main_version" ]; then
+          echo "Version in pyproject.toml is the same as in the main branch."
+          exit 1
+        else
+          echo "Version in pyproject.toml is different from the main branch."
+        fi
