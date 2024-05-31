@@ -1,13 +1,15 @@
 import json
 import os
+from datetime import datetime
+
 from fastapi import FastAPI, Depends
-from typing import Annotated
+from typing import Annotated, cast
 
 from starlette.testclient import TestClient
 
 from inertia import Inertia, inertia_dependency_factory, InertiaResponse, InertiaConfig
 
-from inertia.tests.utils import get_stripped_html
+from .utils import get_stripped_html
 
 app = FastAPI()
 manifest_json = os.path.join(os.path.dirname(__file__), "dummy_manifest_js.json")
@@ -47,8 +49,11 @@ TypescriptProductionInertiaDep = Annotated[
     ),
 ]
 
-PROPS = {
-    "message": "hello from index",
+PROPS = {"message": "hello from index", "created_at": datetime.now()}
+
+EXPECTED_PROPS = {
+    **PROPS,
+    "created_at": cast(datetime, PROPS["created_at"]).isoformat(),
 }
 
 COMPONENT = "IndexPage"
@@ -88,7 +93,7 @@ def test_first_request_returns_html() -> None:
         assert response.headers.get("content-type").split(";")[0] == "text/html"
         expected_url = str(client.base_url) + "/"
         assert response.text.strip() == get_stripped_html(
-            component_name=COMPONENT, props=PROPS, url=expected_url
+            component_name=COMPONENT, props=EXPECTED_PROPS, url=expected_url
         )
 
 
@@ -101,7 +106,7 @@ def test_first_request_returns_html_custom_url() -> None:
         script_asset_url = CUSTOM_URL + "/src/main.js"
         assert response.text.strip() == get_stripped_html(
             component_name=COMPONENT,
-            props=PROPS,
+            props=EXPECTED_PROPS,
             url=expected_url,
             script_asset_url=script_asset_url,
         )
@@ -115,7 +120,7 @@ def test_first_request_returns_html_typescript() -> None:
         expected_url = str(client.base_url) + "/typescript"
         assert response.text.strip() == get_stripped_html(
             component_name=COMPONENT,
-            props=PROPS,
+            props=EXPECTED_PROPS,
             url=expected_url,
             script_asset_url="http://localhost:5173/src/main.ts",
         )
@@ -135,7 +140,7 @@ def test_first_request_returns_html_production() -> None:
         expected_url = str(client.base_url) + "/production"
         assert response.text.strip() == get_stripped_html(
             component_name=COMPONENT,
-            props=PROPS,
+            props=EXPECTED_PROPS,
             url=expected_url,
             script_asset_url=js_file,
             css_asset_url=css_file,
@@ -157,7 +162,7 @@ def test_first_request_returns_html_production_typescript() -> None:
         expected_url = str(client.base_url) + "/typescript-production"
         assert response.text.strip() == get_stripped_html(
             component_name=COMPONENT,
-            props=PROPS,
+            props=EXPECTED_PROPS,
             url=expected_url,
             script_asset_url=js_file,
             css_asset_url=css_file,
