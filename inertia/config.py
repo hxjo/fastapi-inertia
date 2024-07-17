@@ -18,7 +18,7 @@ class InertiaConfig:
     dev_url: str = "http://localhost:5173"
     ssr_url: str = "http://localhost:13714"
     ssr_enabled: bool = False
-    manifest_json_path: str = "dist/.vite/manifest.json"
+    manifest_json_path: str = "./dist/.vite/manifest.json"
     root_directory: str = "src"
     entrypoint_filename: str = "main.js"
     use_flash_messages: bool = False
