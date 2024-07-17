@@ -1,13 +1,14 @@
 import logging
+import os
 
 from fastapi import Request, Response, status
 from fastapi.responses import JSONResponse, HTMLResponse
-from typing import Any, Callable, Dict, Optional, TypeVar, TypedDict, Union, cast
+from typing import Any, Callable, Dict, List, Optional, TypeVar, TypedDict, Union, cast
 import json
 from pydantic import BaseModel
 from starlette.responses import RedirectResponse
 
-from .config import InertiaConfig
+from .config import InertiaConfig, _read_manifest_file
 from .exceptions import InertiaVersionConflictException
 from .utils import LazyProp
 from dataclasses import dataclass
@@ -39,11 +40,11 @@ class Inertia:
     @dataclass
     class InertiaFiles:
         """
-        Helper class to store the CSS and JS files for Inertia.js
+        Helper class to store the CSS and JS file urls for Inertia.js
         """
 
-        css_file: Union[str, None]
-        js_file: str
+        css_file_urls: List[str]
+        js_file_url: str
 
     _request: Request
     _component: str
@@ -143,20 +144,25 @@ class Inertia:
         Set the Inertia files (CSS and JS) based on the configuration
         """
         if self._config.environment == "production" or self._config.ssr_enabled:
-            with open(self._config.manifest_json_path, "r") as manifest_file:
-                manifest = json.load(manifest_file)
+            manifest = _read_manifest_file(self._config.manifest_json_path)
+            asset_manifest = manifest[
+                f"{self._config.root_directory}/{self._config.entrypoint_filename}"
+            ]
+            css_file_urls = asset_manifest.get("css", []) or []
+            js_file_url = asset_manifest["file"]
 
-            extension = "ts" if self._config.use_typescript else "js"
-
-            css_file = manifest[f"src/main.{extension}"]["css"][0]
-            js_file = manifest[f"src/main.{extension}"]["file"]
             self._inertia_files = self.InertiaFiles(
-                css_file=f"/src/{css_file}", js_file=f"/{js_file}"
+                css_file_urls=[
+                    os.path.join("/", self._config.assets_prefix, file)
+                    for file in css_file_urls
+                ],
+                js_file_url=os.path.join("/", self._config.assets_prefix, js_file_url),
             )
         else:
-            extension = "ts" if self._config.use_typescript else "js"
-            js_file = f"{self._config.dev_url}/src/main.{extension}"
-            self._inertia_files = self.InertiaFiles(css_file=None, js_file=js_file)
+            js_file_url = f"{self._config.dev_url}/{self._config.root_directory}/{self._config.entrypoint_filename}"
+            self._inertia_files = self.InertiaFiles(
+                css_file_urls=[], js_file_url=js_file_url
+            )
 
     @classmethod
     def _deep_transform_callables(
@@ -208,11 +214,17 @@ class Inertia:
         :param body: The content for the body tag
         :return: The HTML content
         """
-        css_link = (
-            f'<link rel="stylesheet" href="{self._inertia_files.css_file}">'
-            if self._inertia_files.css_file
+        css_links = (
+            "\n".join(
+                [
+                    f'<link rel="stylesheet" href="{url}">'
+                    for url in self._inertia_files.css_file_urls
+                ]
+            )
+            if len(self._inertia_files.css_file_urls) > 0
             else ""
         )
+
         return f"""
                    <!DOCTYPE html>
                    <html>
@@ -220,11 +232,11 @@ class Inertia:
                             <meta charset="UTF-8">
                             <meta name="viewport" content="width=device-width, initial-scale=1.0">
                             {head}
-                            {css_link}
+                            {css_links}
                         </head>
                         <body>
                             {body}
-                            <script type="module" src="{self._inertia_files.js_file}"></script>
+                            <script type="module" src="{self._inertia_files.js_file_url}"></script>
                        </body>
                    </html>
                    """
