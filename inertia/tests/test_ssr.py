@@ -1,3 +1,4 @@
+from typing import TypedDict
 import json
 import os
 from datetime import datetime
@@ -56,7 +57,12 @@ def test_calls_inertia_render(post_function: MagicMock) -> None:
         )
 
 
-RETURNED_JSON = {
+class ReturnedJson(TypedDict):
+    head: list[str]
+    body: str
+
+
+RETURNED_JSON: ReturnedJson = {
     "head": ['<link ref="stylesheet" href="some-magical-url.com">'],
     "body": "<div>some body content</div>",
 }

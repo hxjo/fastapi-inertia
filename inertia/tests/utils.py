@@ -1,8 +1,7 @@
 import json
-from string import Template
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Union, cast
 from httpx import Response
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 
 
 def assert_response_content(
@@ -15,13 +14,20 @@ def assert_response_content(
     expected_css_asset_url: Optional[str] = None,
     expected_additional_head_content: Optional[List[str]] = None,
     expected_body_content: Optional[str] = None,
-):
+) -> None:
     soup = BeautifulSoup(response.text, "html.parser")
+    if not soup:
+        raise AssertionError("Response content is not HTML")
     if expected_component or expected_props or expected_url:
-        data_page_raw = soup.find("div", attrs={"data-page": True}).attrs.get(
-            "data-page"
+        data_page_el = cast(
+            Union[Tag, None], soup.find("div", attrs={"data-page": True})
         )
-        data_page = json.loads(data_page_raw)
+        if not data_page_el:
+            raise AssertionError("No data-page element found")
+        data_page_raw = data_page_el.attrs.get("data-page")
+        if not data_page_raw:
+            raise AssertionError("data-page attribute is empty")
+        data_page = json.loads(cast(str, data_page_raw))
         if expected_component is not None:
             assert data_page["component"] == expected_component
         if expected_props is not None:
@@ -44,12 +50,20 @@ def assert_response_content(
     if expected_additional_head_content is not None:
         for head_element in expected_additional_head_content:
             head_soup = BeautifulSoup(head_element, "html.parser")
-            head_tag = head_soup.find()
+            if not head_soup:
+                raise AssertionError("Additional head content is not HTML")
+            head_tag = cast(Union[Tag, None], head_soup.find())
+            if not head_tag:
+                raise AssertionError("No element found in additional head content")
+            if not soup.head:
+                raise AssertionError("No head element found")
             assert soup.head.find(name=head_tag.name, attrs=head_tag.attrs) is not None
 
     if expected_body_content is not None:
         body_soup = BeautifulSoup(expected_body_content, "html.parser")
         for body_element in body_soup.find_all():
+            if not soup.body:
+                raise AssertionError("No body element found")
             assert (
                 soup.body.find(
                     name=body_element.name,
