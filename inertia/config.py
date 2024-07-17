@@ -1,4 +1,6 @@
-from typing import Literal, Type
+from functools import lru_cache
+import json
+from typing import Literal, Type, Optional, TypedDict, Dict, cast
 from json import JSONEncoder
 from .utils import InertiaJsonEncoder
 from dataclasses import dataclass
@@ -22,3 +24,23 @@ class InertiaConfig:
     use_flash_errors: bool = False
     flash_message_key: str = "messages"
     flash_error_key: str = "errors"
+
+
+class ViteManifestChunk(TypedDict):
+    file: str
+    src: Optional[str]
+    isEntry: Optional[bool]
+    isDynamicEntry: Optional[bool]
+    dynamicImports: Optional[list[str]]
+    css: Optional[list[str]]
+    assets: Optional[list[str]]
+    imports: Optional[list[str]]
+
+
+ViteManifest = Dict[str, ViteManifestChunk]
+
+
+@lru_cache
+def _read_manifest_file(path: str) -> ViteManifest:
+    with open(path, "r") as manifest_file:
+        return cast(ViteManifest, json.load(manifest_file))
