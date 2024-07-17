@@ -32,8 +32,23 @@ ProductionInertiaDep = Annotated[
     ),
 ]
 
+
+ProductionWithAssetPrefixInertiaDep = Annotated[
+    Inertia,
+    Depends(
+        inertia_dependency_factory(
+            InertiaConfig(
+                manifest_json_path=manifest_json,
+                environment="production",
+                assets_prefix="/assets",
+            )
+        )
+    ),
+]
+
 TypescriptInertiaDep = Annotated[
-    Inertia, Depends(inertia_dependency_factory(InertiaConfig(use_typescript=True)))
+    Inertia,
+    Depends(inertia_dependency_factory(InertiaConfig(entrypoint_filename="main.ts"))),
 ]
 
 TypescriptProductionInertiaDep = Annotated[
@@ -43,7 +58,7 @@ TypescriptProductionInertiaDep = Annotated[
             InertiaConfig(
                 manifest_json_path=manifest_json_ts,
                 environment="production",
-                use_typescript=True,
+                entrypoint_filename="main.ts",
             )
         )
     ),
@@ -71,6 +86,13 @@ async def typescript(inertia: TypescriptInertiaDep) -> InertiaResponse:
 
 @app.get("/production", response_model=None)
 async def production(inertia: ProductionInertiaDep) -> InertiaResponse:
+    return await inertia.render(COMPONENT, PROPS)
+
+
+@app.get("/production-asset-prefix", response_model=None)
+async def production_asset_prefix(
+    inertia: ProductionWithAssetPrefixInertiaDep,
+) -> InertiaResponse:
     return await inertia.render(COMPONENT, PROPS)
 
 
@@ -134,8 +156,7 @@ def test_first_request_returns_html_typescript() -> None:
 def test_first_request_returns_html_production() -> None:
     with open(manifest_json, "r") as manifest_file:
         manifest = json.load(manifest_file)
-    css_file = manifest["src/main.js"]["css"][0]
-    css_file = f"/src/{css_file}"
+    css_files = [f"/{file}" for file in manifest["src/main.js"]["css"]]
     js_file = manifest["src/main.js"]["file"]
     js_file = f"/{js_file}"
     with TestClient(app) as client:
@@ -149,7 +170,7 @@ def test_first_request_returns_html_production() -> None:
             expected_props=EXPECTED_PROPS,
             expected_url=expected_url,
             expected_script_asset_url=js_file,
-            expected_css_asset_url=css_file,
+            expected_css_asset_urls=css_files,
         )
 
 
@@ -157,8 +178,7 @@ def test_first_request_returns_html_production_typescript() -> None:
     with open(manifest_json_ts, "r") as manifest_file:
         manifest = json.load(manifest_file)
 
-    css_file = manifest["src/main.ts"]["css"][0]
-    css_file = f"/src/{css_file}"
+    css_files = [f"/{file}" for file in manifest["src/main.ts"]["css"]]
     js_file = manifest["src/main.ts"]["file"]
     js_file = f"/{js_file}"
     with TestClient(app) as client:
@@ -172,5 +192,26 @@ def test_first_request_returns_html_production_typescript() -> None:
             expected_props=EXPECTED_PROPS,
             expected_url=expected_url,
             expected_script_asset_url=js_file,
-            expected_css_asset_url=css_file,
+            expected_css_asset_urls=css_files,
+        )
+
+
+def test_first_request_returns_html_production_with_prefix_on_assets() -> None:
+    with open(manifest_json, "r") as manifest_file:
+        manifest = json.load(manifest_file)
+    css_files = [f"/assets/{file}" for file in manifest["src/main.js"]["css"]]
+    js_file = manifest["src/main.js"]["file"]
+    js_file = f"/assets/{js_file}"
+    with TestClient(app) as client:
+        response = client.get("/production-asset-prefix")
+        assert response.status_code == 200
+        assert response.headers.get("content-type").split(";")[0] == "text/html"
+        expected_url = str(client.base_url) + "/production-asset-prefix"
+        assert_response_content(
+            response,
+            expected_component=COMPONENT,
+            expected_props=EXPECTED_PROPS,
+            expected_url=expected_url,
+            expected_script_asset_url=js_file,
+            expected_css_asset_urls=css_files,
         )

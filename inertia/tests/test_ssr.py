@@ -72,8 +72,7 @@ RETURNED_JSON: ReturnedJson = {
 def test_returns_html(post_function: MagicMock) -> None:
     with open(manifest_json, "r") as manifest_file:
         manifest = json.load(manifest_file)
-    css_file = manifest["src/main.js"]["css"][0]
-    css_file = f"/src/{css_file}"
+    css_files = [f"/{file}" for file in manifest["src/main.js"]["css"]]
     js_file = manifest["src/main.js"]["file"]
     js_file = f"/{js_file}"
     with TestClient(app) as client:
@@ -93,7 +92,7 @@ def test_returns_html(post_function: MagicMock) -> None:
         assert_response_content(
             response,
             expected_script_asset_url=js_file,
-            expected_css_asset_url=css_file,
+            expected_css_asset_urls=css_files,
             expected_additional_head_content=RETURNED_JSON["head"],
             expected_body_content=RETURNED_JSON["body"],
         )
@@ -104,8 +103,7 @@ def test_fallback_to_classic_if_render_errors(post_function: MagicMock) -> None:
     with open(manifest_json, "r") as manifest_file:
         manifest = json.load(manifest_file)
 
-    css_file = manifest["src/main.js"]["css"][0]
-    css_file = f"/src/{css_file}"
+    css_files = [f"/{file}" for file in manifest["src/main.js"]["css"]]
     js_file = manifest["src/main.js"]["file"]
     js_file = f"/{js_file}"
     with TestClient(app) as client:
@@ -128,5 +126,5 @@ def test_fallback_to_classic_if_render_errors(post_function: MagicMock) -> None:
             expected_props=EXPECTED_PROPS,
             expected_url=f"{client.base_url}/",
             expected_script_asset_url=js_file,
-            expected_css_asset_url=css_file,
+            expected_css_asset_urls=css_files,
         )

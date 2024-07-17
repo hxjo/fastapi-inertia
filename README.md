@@ -1,61 +1,70 @@
 # Inertia.js FastAPI Adapter
-<!-- TOC -->
-* [Inertia.js FastAPI Adapter](#inertiajs-fastapi-adapter)
-  * [Installation](#installation)
-  * [Configuration](#configuration)
-  * [Examples](#examples)
-  * [Usage](#usage)
-    * [Set up the dependency](#set-up-the-dependency)
-    * [Rendering a page](#rendering-a-page)
-    * [Rendering assets](#rendering-assets)
-    * [Sharing data](#sharing-data)
-    * [Flash messages](#flash-messages)
-    * [Flash errors](#flash-errors)
-    * [Redirect to an external URL](#redirect-to-an-external-url)
-    * [Redirect back](#redirect-back)
-    * [Enable SSR](#enable-ssr)
-  * [Frontend documentation](#frontend-documentation)
-    * [For a classic build](#for-a-classic-build)
-    * [For a SSR build](#for-a-ssr-build)
-    * [Performance note](#performance-note)
+
 <!-- TOC -->
 
+- [Inertia.js FastAPI Adapter](#inertiajs-fastapi-adapter)
+  - [Installation](#installation)
+  - [Configuration](#configuration)
+  - [Examples](#examples)
+  - [Usage](#usage)
+    - [Set up the dependency](#set-up-the-dependency)
+    - [Rendering a page](#rendering-a-page)
+    - [Rendering assets](#rendering-assets)
+    - [Sharing data](#sharing-data)
+    - [Flash messages](#flash-messages)
+    - [Flash errors](#flash-errors)
+    - [Redirect to an external URL](#redirect-to-an-external-url)
+    - [Redirect back](#redirect-back)
+    - [Enable SSR](#enable-ssr)
+  - [Frontend documentation](#frontend-documentation)
+    - [For a classic build](#for-a-classic-build)
+    - [For a SSR build](#for-a-ssr-build)
+    - [Performance note](#performance-note)
+
 ## Installation
+
 You can install the package via pip:
+
 ```bash
 pip install fastapi-inertia
 ```
 
-
 ## Configuration
-You can configure the adapter by passing a `InertiaConfig` object to the `Inertia` class. 
+
+You can configure the adapter by passing a `InertiaConfig` object to the `Inertia` class.
 The following options are available:
 
-| key                | default                | options                                 | description                                                                                                                                     |
-|--------------------|------------------------|-----------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
-| environment        | development            | development,production                  | The environment to use                                                                                                                          |
-| version            | 1.0.0                  | Any valid string                        | The version of your server                                                                                                                      |
-| json_encoder       | InertiaJsonEncoder     | Any class that extends json.JSONEncoder | The JSON encoder used to encode page data when HTML is returned                                                                                 |
-| manifest_json_path | ""                     | Any valid path                          | The path to the manifest.json file. Needed in production                                                                                        |
-| dev_url            | http://localhost:5173  | Any valid url                           | The URL to the development server                                                                                                               |
-| ssr_url            | http://localhost:13714 | Any valid url                           | The URL to the SSR server                                                                                                                       |
-| ssr_enabled        | False                  | True,False                              | Whether to [enable SSR](#enable-ssr). You need to install the `requests` package, to have set the manifest_json_path and started the SSR server |
-| use_typescript     | False                  | True,False                              | Whether to use TypeScript                                                                                                                       |
-| use_flash_messages | False                  | True,False                              | Whether to use [flash messages](#flash-messages). You need to use Starlette's SessionMiddleware to use this feature                             |
-| flash_message_key  | messages               | Any valid string                        | The key to use for [flash errors](#flash-errors)                                                                                                |
-| use_flash_errors   | False                  | True,False                              | Whether to use flash errors                                                                                                                     |
-| flash_error_key    | errors                 | Any valid string                        | The key to use for flash errors                                                                                                                 |
+| key                 | default                | options                                 | description                                                                                                                                     |
+| ------------------- | ---------------------- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| environment         | development            | development,production                  | The environment to use                                                                                                                          |
+| version             | 1.0.0                  | Any valid string                        | The version of your server                                                                                                                      |
+| json_encoder        | InertiaJsonEncoder     | Any class that extends json.JSONEncoder | The JSON encoder used to encode page data when HTML is returned                                                                                 |
+| manifest_json_path  | ""                     | Any valid path                          | The path to the manifest.json file. Needed in production                                                                                        |
+| dev_url             | http://localhost:5173  | Any valid url                           | The URL to the development server                                                                                                               |
+| ssr_url             | http://localhost:13714 | Any valid url                           | The URL to the SSR server                                                                                                                       |
+| ssr_enabled         | False                  | True,False                              | Whether to [enable SSR](#enable-ssr). You need to install the `requests` package, to have set the manifest_json_path and started the SSR server |
+| root_directory      | src                    | Any valid path                          | The directory in which is located the javascript code in your frontend. Will be used to find the relevant files in your manifest.json.          |
+| entrypoint_filename | main.js                | Any valid file                          | The entrypoint for you frontend. Will be used to find the relevant files in your manifest.json.                                                 |
+| assets_prefix       | ""                     | Any valid string                        | An optional prefix for your assets. Will prefix the links generated from the assets mentioned in manifest.json.                                 |
+| use_typescript      | False                  | True,False                              | Whether to use TypeScript                                                                                                                       |
+| use_flash_messages  | False                  | True,False                              | Whether to use [flash messages](#flash-messages). You need to use Starlette's SessionMiddleware to use this feature                             |
+| flash_message_key   | messages               | Any valid string                        | The key to use for [flash errors](#flash-errors)                                                                                                |
+| use_flash_errors    | False                  | True,False                              | Whether to use flash errors                                                                                                                     |
+| flash_error_key     | errors                 | Any valid string                        | The key to use for flash errors                                                                                                                 |
 
 ## Examples
+
 You can see different full examples in the [following repository](https://github.com/hxjo/fastapi-inertia-examples).
 
-
 ## Usage
+
 ### Set up the dependency
+
 This Inertia.js adapter has been developed to be used as a FastAPI dependency.
 To use it, you first need to set up the dependency, with your desired configuration.
 
 `inertia_dependency.py`
+
 ```python
 from fastapi import Depends
 from typing import Annotated
@@ -71,14 +80,18 @@ inertia_dependency = inertia_dependency_factory(
 
 InertiaDependency = Annotated[Inertia, Depends(inertia_dependency)]
 ```
+
 You can then access the `InertiaDependency` in your route functions, and use it to render your pages.
 
 ### Rendering a page
+
 To render a page, you can use the `render` method of the `Inertia` class. It takes two arguments:
+
 - The name of the page
-- The data to pass to the page 
+- The data to pass to the page
 
 `main.py`
+
 ```python
 from fastapi import FastAPI, Depends
 from inertia import InertiaResponse, InertiaVersionConflictException, inertia_version_conflict_exception_handler
@@ -96,10 +109,12 @@ async def index(inertia: InertiaDependency) -> InertiaResponse:
 ```
 
 ### Rendering assets
+
 As your front-end framework likely references assets that are not served by FastAPI,
 you need to mount a static directory to serve these assets.
 
 `main.py`
+
 ```python
 import os
 from fastapi import FastAPI
@@ -121,10 +136,12 @@ app.mount(
 ```
 
 ### Sharing data
+
 To share data, in Inertia, is basically to add data before even entering your route.
-This is useful, for example, to add a user to all your pages that expects your user to be logged in.  
+This is useful, for example, to add a user to all your pages that expects your user to be logged in.
 
 `main.py`
+
 ```python
 from fastapi import FastAPI, Depends
 from inertia import InertiaResponse, InertiaVersionConflictException, inertia_version_conflict_exception_handler
@@ -148,6 +165,7 @@ async def index(inertia: InertiaDependency) -> InertiaResponse:
 ```
 
 ### Flash messages
+
 With the inertia dependency, you have access to a `flash` helper method that allows you to add flash messages to your pages.
 This is useful to display messages to the user after a form submission, for example.
 Those messages are called `flash` messages as they are only displayed once.  
@@ -155,6 +173,7 @@ You need to have set `use_flash_messages` to `True` in your configuration to use
 You need to have the `SessionMiddleware` enabled in your application to use this feature.
 
 `main.py`
+
 ```python
 from fastapi import FastAPI, Depends
 from starlette.middleware.sessions import SessionMiddleware
@@ -174,15 +193,17 @@ async def index(inertia: InertiaDependency) -> InertiaResponse:
 ```
 
 ### Flash errors
+
 If you handle form submissions in your application, and if you do all validation at the pydantic level,
 a malformed payload will raise a `RequestValidationError` exception.
 You can use the `inertia_request_validation_exception_handler` to handle this exception and display the errors to the user.
 It supports error bags, so you can display multiple errors at once.
 If the request is not from Inertia, it will fallback to FastAPI's default error handling.  
-In order to use  this feature, you need to have set `use_flash_errors` to `True` in your configuration.
+In order to use this feature, you need to have set `use_flash_errors` to `True` in your configuration.
 You also need to have the `SessionMiddleware` enabled in your application to use this feature.
 
 `main.py`
+
 ```python
 from fastapi import FastAPI, Depends
 from pydantic import BaseModel, model_validator
@@ -201,7 +222,7 @@ app.add_middleware(SessionMiddleware, secret_key="secret")
 
 class Form(BaseModel):
     name: str
-    
+
     @model_validator(mode="before")
     @classmethod
     def name_must_contain_doe(cls, data: Any):
@@ -214,10 +235,12 @@ async def index(data: Form, inertia: InertiaDependency) -> InertiaResponse:
 ```
 
 ### Redirect to an external URL
+
 If you want to redirect the user to an external URL, you can use the `location` method of the `Inertia` class.
 It takes one argument: the URL to redirect to.
 
 `main.py`
+
 ```python
 from fastapi import FastAPI, Depends
 from inertia import InertiaResponse, InertiaVersionConflictException, inertia_version_conflict_exception_handler
@@ -231,14 +254,15 @@ async def index(inertia: InertiaDependency) -> InertiaResponse:
     return inertia.location('https://google.fr')
 ```
 
-
 ### Redirect back
+
 If you want to redirect the user back (for example, after a form submission), you can use the `back` method of the `Inertia` class.
 It will use the `Referer` header to redirect the user back.
-If you're on a `GET` request, the status code will be `307`. Otherwise, it will be `303`. 
+If you're on a `GET` request, the status code will be `307`. Otherwise, it will be `303`.
 That ways, it will trigger a new GET request to the referer URL.
 
 `main.py`
+
 ```python
 from fastapi import FastAPI, Depends
 from inertia import InertiaResponse, InertiaVersionConflictException, inertia_version_conflict_exception_handler
@@ -253,25 +277,28 @@ async def index(inertia: InertiaDependency) -> InertiaResponse:
 ```
 
 ### Enable SSR
+
 To enable SSR, you need to set `ssr_enabled` to `True` in your configuration.
 You also need to have set the `manifest_json_path` to the path of your `manifest.json` file.
 You need to have the `requests` package installed to use this feature.
 This can be done through the following command:
+
 ```bash
 pip install requests
 ```
 
-
 ## Frontend documentation
+
 There is no particular caveats to keep in mind when using this adapter.
 However, here's an example of how you would set up your frontend to work with this adapter.
 
 ### For a classic build
-> [!NOTE]   
+
+> [!NOTE]  
 > To build the project, you can run the `vite build` command
 
-
 `vite.config.js`
+
 ```javascript
 import { fileURLToPath } from "node:url";
 import { dirname } from "path";
@@ -299,6 +326,7 @@ export default defineConfig({
 ```
 
 `main.js`
+
 ```javascript
 import { createApp, h } from "vue";
 import { createInertiaApp } from "@inertiajs/vue3";
@@ -317,12 +345,13 @@ createInertiaApp({
 ```
 
 ### For a SSR build
-> [!NOTE]   
+
+> [!NOTE]  
 > To build the project, you can run the `vite build` and `vite build --ssr` commands  
 > To serve the Inertia SSR server, you can run the `node dist/ssr/ssr.js` command
 
-
 `vite.config.js`
+
 ```javascript
 import { fileURLToPath } from "node:url";
 import { dirname } from "path";
@@ -350,6 +379,7 @@ export default defineConfig(({ isSsrBuild }) => ({
 ```
 
 `main.js`
+
 ```javascript
 import { createSSRApp, h } from "vue";
 import { createInertiaApp } from "@inertiajs/vue3";
@@ -368,6 +398,7 @@ createInertiaApp({
 ```
 
 `ssr.js`
+
 ```javascript
 import { createInertiaApp } from "@inertiajs/vue3";
 import createServer from "@inertiajs/vue3/server";
@@ -387,34 +418,39 @@ createServer((page) =>
         render: () => h(App, props),
       }).use(plugin);
     },
-  }),
+  })
 );
 ```
 
 ### Performance note
+
 With the implementation proposed above, you'll be loading the whole page on the first load.
 This is because everything will be bundled in the same file.
-If you want to split your code, you can use the following implementation.  
+If you want to split your code, you can use the following implementation.
 
 `helper.js` (taken from [laravel vite plugin inertia helpers](https://github.com/laravel/vite-plugin/blob/1.x/src/inertia-helpers/index.ts))
+
 ```javascript
-export async function resolvePageComponent<T>(path: string|string[], pages: Record<string, Promise<T> | (() => Promise<T>)>): Promise<T> {
-    for (const p of (Array.isArray(path) ? path : [path])) {
-        const page = pages[p]
+export async function resolvePageComponent<T>(
+  path: string | string[],
+  pages: Record<string, Promise<T> | (() => Promise<T>)>
+): Promise<T> {
+  for (const p of Array.isArray(path) ? path : [path]) {
+    const page = pages[p];
 
-        if (typeof page === 'undefined') {
-            continue
-        }
-
-        return typeof page === 'function' ? page() : page
+    if (typeof page === "undefined") {
+      continue;
     }
 
-    throw new Error(`Page not found: ${path}`)
+    return typeof page === "function" ? page() : page;
+  }
+
+  throw new Error(`Page not found: ${path}`);
 }
 ```
 
-
 `main.js`
+
 ```javascript
 import { createApp, h } from "vue";
 import { createInertiaApp } from "@inertiajs/vue3";
@@ -422,9 +458,10 @@ import { resolvePageComponent } from "@/helper.js";
 
 createInertiaApp({
   resolve: (name) => {
-    return resolvePageComponent(`./Pages/${name}.vue`,
-      import.meta.glob("./Pages/**/*.vue"),
-    )
+    return resolvePageComponent(
+      `./Pages/${name}.vue`,
+      import.meta.glob("./Pages/**/*.vue")
+    );
   },
   setup({ el, App, props, plugin }) {
     createApp({ render: () => h(App, props) })

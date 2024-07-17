@@ -11,7 +11,7 @@ def assert_response_content(
     expected_props: Optional[dict[str, Any]] = None,
     expected_url: Optional[str] = None,
     expected_script_asset_url: Optional[str] = None,
-    expected_css_asset_url: Optional[str] = None,
+    expected_css_asset_urls: Optional[List[str]] = None,
     expected_additional_head_content: Optional[List[str]] = None,
     expected_body_content: Optional[str] = None,
 ) -> None:
@@ -41,11 +41,10 @@ def assert_response_content(
         )
         assert script_tag is not None
 
-    if expected_css_asset_url is not None:
-        css_tag = soup.find(
-            "link", attrs={"href": expected_css_asset_url, "rel": "stylesheet"}
-        )
-        assert css_tag is not None
+    if expected_css_asset_urls is not None:
+        for asset_url in expected_css_asset_urls:
+            css_tag = soup.find("link", attrs={"href": asset_url, "rel": "stylesheet"})
+            assert css_tag is not None
 
     if expected_additional_head_content is not None:
         for head_element in expected_additional_head_content:

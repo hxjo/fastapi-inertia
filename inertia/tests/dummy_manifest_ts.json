@@ -5,7 +5,9 @@
     "src": "src/main.ts",
     "isEntry": true,
     "css": [
-      "assets/main-GJL2BnPz.css"
+      "assets/main-GJL2BnPz.css",
+      "assets/main-GJL2BnPy.css",
+      "assets/main-GJL2BnPx.css"
     ]
   }
 }
