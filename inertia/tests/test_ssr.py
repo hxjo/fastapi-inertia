@@ -9,7 +9,7 @@ from starlette.testclient import TestClient
 
 from inertia import Inertia, inertia_dependency_factory, InertiaResponse, InertiaConfig
 
-from .utils import get_stripped_html
+from .utils import assert_response_content
 
 app = FastAPI()
 manifest_json = os.path.join(os.path.dirname(__file__), "dummy_manifest_js.json")
@@ -56,7 +56,10 @@ def test_calls_inertia_render(post_function: MagicMock) -> None:
         )
 
 
-RETURNED_JSON = {"head": ["some info in the head"], "body": "some info in the body"}
+RETURNED_JSON = {
+    "head": ['<link ref="stylesheet" href="some-magical-url.com">'],
+    "body": "<div>some body content</div>",
+}
 
 
 @patch("requests.post", return_value=MagicMock(json=lambda: RETURNED_JSON))
@@ -81,14 +84,12 @@ def test_returns_html(post_function: MagicMock) -> None:
         )
         assert response.status_code == 200
         assert response.headers.get("content-type").split(";")[0] == "text/html"
-        assert response.text.strip() == get_stripped_html(
-            component_name=COMPONENT,
-            props=EXPECTED_PROPS,
-            url=f"{client.base_url}/",
-            script_asset_url=js_file,
-            css_asset_url=css_file,
-            body_content=cast(str, RETURNED_JSON["body"]),
-            additional_head_content="\n".join(RETURNED_JSON["head"]),
+        assert_response_content(
+            response,
+            expected_script_asset_url=js_file,
+            expected_css_asset_url=css_file,
+            expected_additional_head_content=RETURNED_JSON["head"],
+            expected_body_content=RETURNED_JSON["body"],
         )
 
 
@@ -115,10 +116,11 @@ def test_fallback_to_classic_if_render_errors(post_function: MagicMock) -> None:
         )
         assert response.status_code == 200
         assert response.headers.get("content-type").split(";")[0] == "text/html"
-        assert response.text.strip() == get_stripped_html(
-            component_name=COMPONENT,
-            props=EXPECTED_PROPS,
-            url=f"{client.base_url}/",
-            script_asset_url=js_file,
-            css_asset_url=css_file,
+        assert_response_content(
+            response,
+            expected_component=COMPONENT,
+            expected_props=EXPECTED_PROPS,
+            expected_url=f"{client.base_url}/",
+            expected_script_asset_url=js_file,
+            expected_css_asset_url=css_file,
         )

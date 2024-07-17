@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 from starlette.testclient import TestClient
 
-from .utils import get_stripped_html
+from .utils import assert_response_content
 from inertia import Inertia, inertia_dependency_factory, InertiaResponse, InertiaConfig
 
 
@@ -69,6 +69,9 @@ def test_pydantic_basemodel_are_encoded_on_html_response() -> None:
         assert response.status_code == 200
         assert response.headers.get("content-type").split(";")[0] == "text/html"
         expected_url = str(client.base_url) + "/"
-        assert response.text.strip() == get_stripped_html(
-            component_name=COMPONENT, props=EXPECTED_PROPS, url=expected_url
+        assert_response_content(
+            response,
+            expected_component=COMPONENT,
+            expected_props=EXPECTED_PROPS,
+            expected_url=expected_url,
         )
