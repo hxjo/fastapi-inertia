@@ -78,7 +78,7 @@ def _read_manifest_file(path: str) -> ViteManifest:
         return cast(ViteManifest, json_load(manifest_file))
 
 
-@dataclass(kw_only=True)
+@dataclass()
 class InertiaContext:
     """
     The jinja template context to pass to render the html for the first request.
@@ -86,9 +86,9 @@ class InertiaContext:
 
     environment: Literal["development", "production"]
     dev_url: str
-    data: Optional[str] = None
     css: list[str]
     js: str
     is_ssr: bool
+    data: Optional[str] = None
     ssr_head: Optional[str] = None
     ssr_body: Optional[str] = None
