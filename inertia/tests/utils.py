@@ -1,7 +1,12 @@
 import json
+import os
 from typing import Any, List, Optional, Union, cast
+from fastapi.templating import Jinja2Templates
 from httpx import Response
 from bs4 import BeautifulSoup, Tag
+
+template_dir = os.path.join(os.path.dirname(__file__), "templates")
+templates = Jinja2Templates(directory=template_dir)
 
 
 def assert_response_content(

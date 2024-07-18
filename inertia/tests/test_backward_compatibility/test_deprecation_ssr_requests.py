@@ -21,7 +21,7 @@ from inertia import (
     InertiaConfig,
 )
 
-from ..utils import assert_response_content
+from ..utils import assert_response_content, templates
 
 manifest_json = os.path.join(os.path.dirname(__file__), "..", "dummy_manifest_js.json")
 
@@ -94,6 +94,7 @@ InertiaDep = Annotated[
                 ssr_enabled=True,
                 manifest_json_path=manifest_json,
                 ssr_url=SSR_URL,
+                templates=templates,
             )
         )
     ),

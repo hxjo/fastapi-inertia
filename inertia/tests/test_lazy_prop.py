@@ -10,11 +10,14 @@ from inertia import (
     InertiaConfig,
     lazy,
 )
+from .utils import templates
 
 
 app = FastAPI()
 
-InertiaDep = Annotated[Inertia, Depends(inertia_dependency_factory(InertiaConfig()))]
+InertiaDep = Annotated[
+    Inertia, Depends(inertia_dependency_factory(InertiaConfig(templates=templates)))
+]
 
 PROPS = {
     "always_str": "hello from str",

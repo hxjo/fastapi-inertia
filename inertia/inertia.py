@@ -21,7 +21,10 @@ import json
 from pydantic import BaseModel
 from starlette.responses import RedirectResponse
 
-from .config import InertiaConfig, _read_manifest_file
+from inertia.templating import InertiaExtension
+
+from .config import InertiaConfig
+from .utils import InertiaContext, _read_manifest_file
 from .exceptions import InertiaVersionConflictException
 from .utils import LazyProp
 from dataclasses import dataclass
@@ -72,6 +75,7 @@ class Inertia:
     _request: Request
     _component: str
     _props: dict[str, Any]
+    _config: InertiaConfig
     _inertia_files: InertiaFiles
     _client: Union["httpx.AsyncClient", None]
 
@@ -170,6 +174,11 @@ class Inertia:
         )
 
     def _assert_a_request_package_is_installed(self) -> None:
+        """
+        Assert that at least one of the request packages is installed (httpx or requests)
+        :raises ImportError: If none of the packages are
+        :warns DeprecatedWarning: If requests is installed
+        """
         if not httpx and not requests:
             raise ImportError(
                 "You need to install either requests or httpx to use Inertia in SSR mode"
@@ -308,9 +317,21 @@ class Inertia:
         displayable_head = "\n".join(head)
         body = response_json["body"]
 
-        html_content = self._get_html_content(displayable_head, body)
-
-        return HTMLResponse(content=html_content, status_code=200)
+        return self._config.templates.TemplateResponse(
+            name=self._config.root_template_filename,
+            request=self._request,
+            context={
+                "inertia": InertiaContext(
+                    environment=self._config.environment,
+                    dev_url=self._config.dev_url,
+                    is_ssr=True,
+                    ssr_head=displayable_head,
+                    ssr_body=body,
+                    js=self._inertia_files.js_file_url,
+                    css=self._inertia_files.css_file_urls,
+                ),
+            },
+        )
 
     def _render_json(self) -> JSONResponse:
         """
@@ -385,7 +406,7 @@ class Inertia:
         If an error occurs, it will fall back to server-side template rendering
         :param component: The component name to render
         :param props: The props to pass to the component
-        :return: HTMLResponse or JSONResponse
+        :return: InertiaResponse
         """
         if self._config.use_flash_messages:
             self._props.update(
@@ -415,10 +436,20 @@ class Inertia:
         page_json = json.dumps(
             json.dumps(self._get_page_data(), cls=self._config.json_encoder)
         )
-        body = f"<div id='app' data-page='{page_json}'></div>"
-        html_content = self._get_html_content("", body)
-
-        return HTMLResponse(content=html_content)
+        return self._config.templates.TemplateResponse(
+            name=self._config.root_template_filename,
+            request=self._request,
+            context={
+                "inertia": InertiaContext(
+                    environment=self._config.environment,
+                    dev_url=self._config.dev_url,
+                    is_ssr=False,
+                    data=page_json,
+                    js=self._inertia_files.js_file_url,
+                    css=self._inertia_files.css_file_urls,
+                ),
+            },
+        )
 
 
 async def get_httpx_client() -> AsyncGenerator[Union[None, "httpx.AsyncClient"], None]:
@@ -441,6 +472,8 @@ def inertia_dependency_factory(
     :param config_: InertiaConfig object
     :return: Dependency
     """
+
+    config_.templates.env.add_extension(InertiaExtension)
 
     def inertia_dependency(request: Request, client: HttpxClientDep) -> Inertia:
         """

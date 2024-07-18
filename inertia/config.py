@@ -1,8 +1,8 @@
-from functools import lru_cache
-import json
-from typing import Literal, Type, Optional, TypedDict, Dict, Union, cast
+from typing import Literal, Type, Union
 import warnings
 from json import JSONEncoder
+
+from fastapi.templating import Jinja2Templates
 from .utils import InertiaJsonEncoder
 from dataclasses import dataclass
 
@@ -13,6 +13,7 @@ class InertiaConfig:
     Configuration class for Inertia
     """
 
+    templates: Jinja2Templates
     environment: Literal["development", "production"] = "development"
     version: str = "1.0"
     json_encoder: Type[JSONEncoder] = InertiaJsonEncoder
@@ -21,6 +22,7 @@ class InertiaConfig:
     ssr_enabled: bool = False
     manifest_json_path: str = ""
     root_directory: str = "src"
+    root_template_filename: str = "index.html"
     entrypoint_filename: str = "main.js"
     use_flash_messages: bool = False
     use_flash_errors: bool = False
@@ -37,23 +39,3 @@ class InertiaConfig:
                 stacklevel=2,
             )
             self.entrypoint_filename = "main.ts" if self.use_typescript else "main.js"
-
-
-class ViteManifestChunk(TypedDict):
-    file: str
-    src: Optional[str]
-    isEntry: Optional[bool]
-    isDynamicEntry: Optional[bool]
-    dynamicImports: Optional[list[str]]
-    css: Optional[list[str]]
-    assets: Optional[list[str]]
-    imports: Optional[list[str]]
-
-
-ViteManifest = Dict[str, ViteManifestChunk]
-
-
-@lru_cache
-def _read_manifest_file(path: str) -> ViteManifest:
-    with open(path, "r") as manifest_file:
-        return cast(ViteManifest, json.load(manifest_file))

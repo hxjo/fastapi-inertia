@@ -1,7 +1,8 @@
-from json import JSONEncoder
-
+from dataclasses import dataclass
+from json import JSONEncoder, load as json_load
+from functools import lru_cache
 from fastapi.encoders import jsonable_encoder
-from typing import Callable, Any, Union
+from typing import Literal, Callable, Optional, TypedDict, Dict, Union, cast, Any
 
 
 class InertiaJsonEncoder(JSONEncoder):
@@ -55,3 +56,39 @@ def lazy(prop: Union[Callable[[], Any], Any]) -> LazyProp:
     :return: Lazy property
     """
     return LazyProp(prop)
+
+
+class ViteManifestChunk(TypedDict):
+    file: str
+    src: Optional[str]
+    isEntry: Optional[bool]
+    isDynamicEntry: Optional[bool]
+    dynamicImports: Optional[list[str]]
+    css: Optional[list[str]]
+    assets: Optional[list[str]]
+    imports: Optional[list[str]]
+
+
+ViteManifest = Dict[str, ViteManifestChunk]
+
+
+@lru_cache
+def _read_manifest_file(path: str) -> ViteManifest:
+    with open(path, "r") as manifest_file:
+        return cast(ViteManifest, json_load(manifest_file))
+
+
+@dataclass(kw_only=True)
+class InertiaContext:
+    """
+    The jinja template context to pass to render the html for the first request.
+    """
+
+    environment: Literal["development", "production"]
+    dev_url: str
+    data: Optional[str] = None
+    css: list[str]
+    js: str
+    is_ssr: bool
+    ssr_head: Optional[str] = None
+    ssr_body: Optional[str] = None

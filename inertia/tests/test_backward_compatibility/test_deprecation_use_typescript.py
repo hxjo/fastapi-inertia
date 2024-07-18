@@ -10,7 +10,7 @@ from starlette.testclient import TestClient
 
 from inertia import Inertia, inertia_dependency_factory, InertiaResponse, InertiaConfig
 
-from inertia.tests.utils import assert_response_content
+from ..utils import assert_response_content, templates
 
 
 PROPS = {"message": "hello from index", "created_at": datetime.now()}
@@ -36,9 +36,7 @@ def app() -> FastAPI:
             Inertia,
             Depends(
                 inertia_dependency_factory(
-                    InertiaConfig(
-                        use_typescript=True,
-                    )
+                    InertiaConfig(use_typescript=True, templates=templates)
                 )
             ),
         ]
@@ -51,6 +49,7 @@ def app() -> FastAPI:
                         manifest_json_path=manifest_json_ts,
                         environment="production",
                         use_typescript=True,
+                        templates=templates,
                     )
                 )
             ),

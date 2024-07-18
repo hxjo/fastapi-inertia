@@ -5,13 +5,15 @@ from pydantic import BaseModel
 
 from starlette.testclient import TestClient
 
-from .utils import assert_response_content
+from .utils import assert_response_content, templates
 from inertia import Inertia, inertia_dependency_factory, InertiaResponse, InertiaConfig
 
 
 app = FastAPI()
 
-InertiaDep = Annotated[Inertia, Depends(inertia_dependency_factory(InertiaConfig()))]
+InertiaDep = Annotated[
+    Inertia, Depends(inertia_dependency_factory(InertiaConfig(templates=templates)))
+]
 
 
 class Person(BaseModel):
