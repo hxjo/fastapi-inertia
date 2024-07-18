@@ -20,8 +20,8 @@ import json
 from pydantic import BaseModel
 from starlette.responses import RedirectResponse
 
-from inertia.templating import InertiaExtension
 
+from .templating import InertiaExtension
 from .config import InertiaConfig
 from .utils import InertiaContext, _read_manifest_file
 from .exceptions import InertiaVersionConflictException
@@ -168,7 +168,8 @@ class Inertia:
             else {}
         )
 
-    def _assert_httpx_is_installed(self) -> None:
+    @staticmethod
+    def _assert_httpx_is_installed() -> None:
         """
         Assert that httpx is installed
         :raises ImportError: If httpx is not installed
@@ -428,6 +429,7 @@ def inertia_dependency_factory(
     def inertia_dependency(request: Request, client: HttpxClientDep) -> Inertia:
         """
         Dependency for Inertia
+        :param client: HttpxClientDep
         :param request: FastAPI Request object
         :return: Inertia object
         """
