@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2024-07-18
+
+- Fix: SSR failed when the inertia server responded with an empty array
+- Examples: Add examples for both SSR and non-SSR in vue language.
+
 ## [1.0.0] - 2024-07-18
 
 - [BREAKING CHANGE] Introduce templating via Jinja2 instead of a raw HTML string
