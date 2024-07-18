@@ -5,41 +5,13 @@ from datetime import datetime
 from fastapi import FastAPI, Depends
 from typing import Annotated, cast
 
+import pytest
 from starlette.testclient import TestClient
 
 from inertia import Inertia, inertia_dependency_factory, InertiaResponse, InertiaConfig
 
 from inertia.tests.utils import assert_response_content
 
-app = FastAPI()
-manifest_json_ts = os.path.join(
-    os.path.dirname(__file__), "..", "dummy_manifest_ts.json"
-)
-
-
-TypescriptInertiaDep = Annotated[
-    Inertia,
-    Depends(
-        inertia_dependency_factory(
-            InertiaConfig(
-                use_typescript=True,
-            )
-        )
-    ),
-]
-
-TypescriptProductionInertiaDep = Annotated[
-    Inertia,
-    Depends(
-        inertia_dependency_factory(
-            InertiaConfig(
-                manifest_json_path=manifest_json_ts,
-                environment="production",
-                use_typescript=True,
-            )
-        )
-    ),
-]
 
 PROPS = {"message": "hello from index", "created_at": datetime.now()}
 
@@ -50,20 +22,54 @@ EXPECTED_PROPS = {
 
 COMPONENT = "IndexPage"
 
-
-@app.get("/typescript", response_model=None)
-async def typescript(inertia: TypescriptInertiaDep) -> InertiaResponse:
-    return await inertia.render(COMPONENT, PROPS)
-
-
-@app.get("/typescript-production", response_model=None)
-async def typescript_production(
-    inertia: TypescriptProductionInertiaDep,
-) -> InertiaResponse:
-    return await inertia.render(COMPONENT, PROPS)
+manifest_json_ts = os.path.join(
+    os.path.dirname(__file__), "..", "dummy_manifest_ts.json"
+)
 
 
-def test_first_request_returns_html_typescript_still_works() -> None:
+@pytest.fixture()
+def app() -> FastAPI:
+    app = FastAPI()
+
+    with pytest.deprecated_call():
+        TypescriptInertiaDep = Annotated[
+            Inertia,
+            Depends(
+                inertia_dependency_factory(
+                    InertiaConfig(
+                        use_typescript=True,
+                    )
+                )
+            ),
+        ]
+    with pytest.deprecated_call():
+        TypescriptProductionInertiaDep = Annotated[
+            Inertia,
+            Depends(
+                inertia_dependency_factory(
+                    InertiaConfig(
+                        manifest_json_path=manifest_json_ts,
+                        environment="production",
+                        use_typescript=True,
+                    )
+                )
+            ),
+        ]
+
+    @app.get("/typescript", response_model=None)
+    async def typescript(inertia: TypescriptInertiaDep) -> InertiaResponse:
+        return await inertia.render(COMPONENT, PROPS)
+
+    @app.get("/typescript-production", response_model=None)
+    async def typescript_production(
+        inertia: TypescriptProductionInertiaDep,
+    ) -> InertiaResponse:
+        return await inertia.render(COMPONENT, PROPS)
+
+    return app
+
+
+def test_first_request_returns_html_typescript_still_works(app: FastAPI) -> None:
     with TestClient(app) as client:
         response = client.get("/typescript")
         assert response.status_code == 200
@@ -78,7 +84,9 @@ def test_first_request_returns_html_typescript_still_works() -> None:
         )
 
 
-def test_first_request_returns_html_production_typescript_still_works() -> None:
+def test_first_request_returns_html_production_typescript_still_works(
+    app: FastAPI,
+) -> None:
     with open(manifest_json_ts, "r") as manifest_file:
         manifest = json.load(manifest_file)
 

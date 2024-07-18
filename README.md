@@ -5,6 +5,11 @@
 - [Inertia.js FastAPI Adapter](#inertiajs-fastapi-adapter)
   - [Installation](#installation)
   - [Configuration](#configuration)
+  - [Deprecated features and migration guide](#deprecated-features-and-migration-guide)
+    - [`use_typescript` configuration option](#use_typescript-configuration-option)
+      - [Migration guide](#migration-guide)
+    - [`requests` package for SSR](#requests-package-for-ssr)
+      - [Migration guide](#migration-guide-1)
   - [Examples](#examples)
   - [Usage](#usage)
     - [Set up the dependency](#set-up-the-dependency)
@@ -34,23 +39,52 @@ pip install fastapi-inertia
 You can configure the adapter by passing a `InertiaConfig` object to the `Inertia` class.
 The following options are available:
 
-| key                 | default                | options                                 | description                                                                                                                                     |
-| ------------------- | ---------------------- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| environment         | development            | development,production                  | The environment to use                                                                                                                          |
-| version             | 1.0.0                  | Any valid string                        | The version of your server                                                                                                                      |
-| json_encoder        | InertiaJsonEncoder     | Any class that extends json.JSONEncoder | The JSON encoder used to encode page data when HTML is returned                                                                                 |
-| manifest_json_path  | ""                     | Any valid path                          | The path to the manifest.json file. Needed in production                                                                                        |
-| dev_url             | http://localhost:5173  | Any valid url                           | The URL to the development server                                                                                                               |
-| ssr_url             | http://localhost:13714 | Any valid url                           | The URL to the SSR server                                                                                                                       |
-| ssr_enabled         | False                  | True,False                              | Whether to [enable SSR](#enable-ssr). You need to install the `requests` package, to have set the manifest_json_path and started the SSR server |
-| root_directory      | src                    | Any valid path                          | The directory in which is located the javascript code in your frontend. Will be used to find the relevant files in your manifest.json.          |
-| entrypoint_filename | main.js                | Any valid file                          | The entrypoint for you frontend. Will be used to find the relevant files in your manifest.json.                                                 |
-| assets_prefix       | ""                     | Any valid string                        | An optional prefix for your assets. Will prefix the links generated from the assets mentioned in manifest.json.                                 |
-| use_typescript      | False                  | True,False                              | Whether to use TypeScript                                                                                                                       |
-| use_flash_messages  | False                  | True,False                              | Whether to use [flash messages](#flash-messages). You need to use Starlette's SessionMiddleware to use this feature                             |
-| flash_message_key   | messages               | Any valid string                        | The key to use for [flash errors](#flash-errors)                                                                                                |
-| use_flash_errors    | False                  | True,False                              | Whether to use flash errors                                                                                                                     |
-| flash_error_key     | errors                 | Any valid string                        | The key to use for flash errors                                                                                                                 |
+| key                 | default                | options                                 | description                                                                                                                                  |
+| ------------------- | ---------------------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| environment         | development            | development,production                  | The environment to use                                                                                                                       |
+| version             | 1.0.0                  | Any valid string                        | The version of your server                                                                                                                   |
+| json_encoder        | InertiaJsonEncoder     | Any class that extends json.JSONEncoder | The JSON encoder used to encode page data when HTML is returned                                                                              |
+| manifest_json_path  | ""                     | Any valid path                          | The path to the manifest.json file. Needed in production                                                                                     |
+| dev_url             | http://localhost:5173  | Any valid url                           | The URL to the development server                                                                                                            |
+| ssr_url             | http://localhost:13714 | Any valid url                           | The URL to the SSR server                                                                                                                    |
+| ssr_enabled         | False                  | True,False                              | Whether to [enable SSR](#enable-ssr). You need to install the `httpx` package, to have set the manifest_json_path and started the SSR server |
+| root_directory      | src                    | Any valid path                          | The directory in which is located the javascript code in your frontend. Will be used to find the relevant files in your manifest.json.       |
+| entrypoint_filename | main.js                | Any valid file                          | The entrypoint for you frontend. Will be used to find the relevant files in your manifest.json.                                              |
+| assets_prefix       | ""                     | Any valid string                        | An optional prefix for your assets. Will prefix the links generated from the assets mentioned in manifest.json.                              |
+| use_typescript      | False                  | True,False                              | Whether to use TypeScript                                                                                                                    |
+| use_flash_messages  | False                  | True,False                              | Whether to use [flash messages](#flash-messages). You need to use Starlette's SessionMiddleware to use this feature                          |
+| flash_message_key   | messages               | Any valid string                        | The key to use for [flash errors](#flash-errors)                                                                                             |
+| use_flash_errors    | False                  | True,False                              | Whether to use flash errors                                                                                                                  |
+| flash_error_key     | errors                 | Any valid string                        | The key to use for flash errors                                                                                                              |
+
+## Deprecated features and migration guide
+
+> [!WARNING]  
+> The items mentioned in this part are deprecated and will be removed in a future version.
+
+### `use_typescript` configuration option
+
+The `use_typescript` configuration option has been deprecated in favour of `entrypoint_filename`.  
+It has been done for the following reason(s):
+
+- To ensure library users are not restricted to the `main.{ext}` pattern when it comes to the entrypoint
+
+#### Migration guide
+
+- Remove the `use_typescript` from your configuration options
+- Add the `entrypoint_filename` option to the configuration ; the value would be `main.ts` if it is your webapp entrypoint's filename.
+
+### `requests` package for SSR
+
+The `requests` package requirement has been changed for a `httpx` package requirement.  
+It has been done for the following reason(s):
+
+- To leverage the async capabilities of httpx.AsyncClient
+
+#### Migration guide
+
+- Install the `httpx` package
+- (Optionally, if not used elsewhere in your application) Remove the `requests` package
 
 ## Examples
 
@@ -280,11 +314,11 @@ async def index(inertia: InertiaDependency) -> InertiaResponse:
 
 To enable SSR, you need to set `ssr_enabled` to `True` in your configuration.
 You also need to have set the `manifest_json_path` to the path of your `manifest.json` file.
-You need to have the `requests` package installed to use this feature.
+You need to have the `httpx` package installed to use this feature.
 This can be done through the following command:
 
 ```bash
-pip install requests
+pip install httpx
 ```
 
 ## Frontend documentation
