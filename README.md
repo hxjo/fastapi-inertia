@@ -56,7 +56,7 @@ The following options are available:
 
 ## Examples
 
-You can see different full examples in the [following repository](https://github.com/hxjo/fastapi-inertia-examples).
+You can see different full examples in the `examples` directory
 
 ## Usage
 

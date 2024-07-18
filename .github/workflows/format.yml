@@ -20,6 +20,6 @@ jobs:
       - name: Install dependencies
         run: poetry install --no-ansi --no-interaction
       - name: Run lint check
-        run: ruff check .
+        run: ruff check inertia
       - name: Run  format check
-        run: ruff format . --check
+        run: ruff format inertia --check
