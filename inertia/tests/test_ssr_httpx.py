@@ -1,3 +1,5 @@
+from importlib import reload
+import sys
 from typing import TypedDict
 import json
 import os
@@ -6,14 +8,23 @@ from unittest.mock import patch, MagicMock
 from fastapi import FastAPI, Depends
 from typing import Annotated, cast
 
+import httpx
+import pytest
 from starlette.testclient import TestClient
 
 from inertia import Inertia, inertia_dependency_factory, InertiaResponse, InertiaConfig
 
 from .utils import assert_response_content
 
+
 app = FastAPI()
 manifest_json = os.path.join(os.path.dirname(__file__), "dummy_manifest_js.json")
+
+
+@pytest.fixture()
+def reload_inertia() -> None:
+    reload(sys.modules["inertia.inertia"])
+
 
 SSR_URL = "http://some_special_url"
 InertiaDep = Annotated[
@@ -41,12 +52,12 @@ async def index(inertia: InertiaDep) -> InertiaResponse:
     return await inertia.render(COMPONENT, PROPS)
 
 
-@patch("requests.post")
-def test_calls_inertia_render(post_function: MagicMock) -> None:
+@patch.object(httpx.AsyncClient, "post")
+def test_calls_inertia_render(post_function: MagicMock, reload_inertia: None) -> None:
     with TestClient(app) as client:
         client.get("/")
         post_function.assert_called_once_with(
-            f"{SSR_URL}/render",
+            url=f"{SSR_URL}/render",
             json={
                 "component": COMPONENT,
                 "props": EXPECTED_PROPS,
@@ -68,8 +79,10 @@ RETURNED_JSON: ReturnedJson = {
 }
 
 
-@patch("requests.post", return_value=MagicMock(json=lambda: RETURNED_JSON))
-def test_returns_html(post_function: MagicMock) -> None:
+@patch.object(
+    httpx.AsyncClient, "post", return_value=MagicMock(json=lambda: RETURNED_JSON)
+)
+def test_returns_html(post_function: MagicMock, reload_inertia: None) -> None:
     with open(manifest_json, "r") as manifest_file:
         manifest = json.load(manifest_file)
     css_files = [f"/{file}" for file in manifest["src/main.js"]["css"]]
@@ -78,7 +91,7 @@ def test_returns_html(post_function: MagicMock) -> None:
     with TestClient(app) as client:
         response = client.get("/")
         post_function.assert_called_once_with(
-            f"{SSR_URL}/render",
+            url=f"{SSR_URL}/render",
             json={
                 "component": COMPONENT,
                 "props": EXPECTED_PROPS,
@@ -98,8 +111,10 @@ def test_returns_html(post_function: MagicMock) -> None:
         )
 
 
-@patch("requests.post", side_effect=Exception())
-def test_fallback_to_classic_if_render_errors(post_function: MagicMock) -> None:
+@patch.object(httpx.AsyncClient, "post", side_effect=Exception())
+def test_fallback_to_classic_if_render_errors(
+    post_function: MagicMock, reload_inertia: None
+) -> None:
     with open(manifest_json, "r") as manifest_file:
         manifest = json.load(manifest_file)
 
@@ -109,7 +124,7 @@ def test_fallback_to_classic_if_render_errors(post_function: MagicMock) -> None:
     with TestClient(app) as client:
         response = client.get("/")
         post_function.assert_called_once_with(
-            f"{SSR_URL}/render",
+            url=f"{SSR_URL}/render",
             json={
                 "component": COMPONENT,
                 "props": EXPECTED_PROPS,

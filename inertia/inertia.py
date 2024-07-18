@@ -1,9 +1,22 @@
 import logging
 import os
+import warnings
 
-from fastapi import Request, Response, status
+from fastapi import Depends, Request, Response, status
 from fastapi.responses import JSONResponse, HTMLResponse
-from typing import Any, Callable, Dict, List, Optional, TypeVar, TypedDict, Union, cast
+from typing import (
+    Annotated,
+    Any,
+    AsyncGenerator,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    TypeVar,
+    TypedDict,
+    Union,
+    cast,
+)
 import json
 from pydantic import BaseModel
 from starlette.responses import RedirectResponse
@@ -12,6 +25,16 @@ from .config import InertiaConfig, _read_manifest_file
 from .exceptions import InertiaVersionConflictException
 from .utils import LazyProp
 from dataclasses import dataclass
+
+try:
+    import requests
+except (ModuleNotFoundError, ImportError):
+    requests = None  # type: ignore
+
+try:
+    import httpx
+except (ModuleNotFoundError, ImportError):
+    httpx = None  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -50,8 +73,14 @@ class Inertia:
     _component: str
     _props: dict[str, Any]
     _inertia_files: InertiaFiles
+    _client: Union["httpx.AsyncClient", None]
 
-    def __init__(self, request: Request, config_: InertiaConfig) -> None:
+    def __init__(
+        self,
+        request: Request,
+        config_: InertiaConfig,
+        client: Union["httpx.AsyncClient", None] = None,
+    ) -> None:
         """
         Constructor
         :param request: FastAPI Request object
@@ -61,6 +90,7 @@ class Inertia:
         self._component = ""
         self._props = {}
         self._config = config_
+        self._client = client
         self._set_inertia_files()
 
         if self._is_stale:
@@ -138,6 +168,18 @@ class Inertia:
             if "_errors" in self._request.session
             else {}
         )
+
+    def _assert_a_request_package_is_installed(self) -> None:
+        if not httpx and not requests:
+            raise ImportError(
+                "You need to install either requests or httpx to use Inertia in SSR mode"
+            )
+        if requests:
+            warnings.warn(
+                "requests is deprecated: Please use httpx instead. It will be removed in 1.0.0",
+                DeprecationWarning,
+                stacklevel=2,
+            )
 
     def _set_inertia_files(self) -> None:
         """
@@ -246,14 +288,19 @@ class Inertia:
         Render the page using SSR, calling the Inertia SSR server.
         :return: The HTML response
         """
-        import requests
-
+        self._assert_a_request_package_is_installed()
         data = json.dumps(self._get_page_data(), cls=self._config.json_encoder)
-        response = requests.post(
-            f"{self._config.ssr_url}/render",
-            json=data,
-            headers={"Content-Type": "application/json"},
-        )
+        request_kwargs: Dict[str, Any] = {
+            "url": f"{self._config.ssr_url}/render",
+            "json": data,
+            "headers": {"Content-Type": "application/json"},
+        }
+        response: Union["httpx._models.Response", "requests.Response"]
+        if self._client is not None:
+            response = await self._client.post(**request_kwargs)
+        else:
+            response = requests.post(**request_kwargs)
+
         response.raise_for_status()
         response_json = response.json()
 
@@ -353,7 +400,7 @@ class Inertia:
         self._component = component
         self._props.update(props or {})
 
-        if "X-Inertia" in self._request.headers:
+        if self._is_inertia_request:
             return self._render_json()
 
         if self._config.ssr_enabled:
@@ -374,21 +421,33 @@ class Inertia:
         return HTMLResponse(content=html_content)
 
 
+async def get_httpx_client() -> AsyncGenerator[Union[None, "httpx.AsyncClient"], None]:
+    try:
+        async with httpx.AsyncClient() as client:
+            yield client
+    except Exception as e:
+        logger.error(f"An error occurred in creating the HTTPX client: {e}")
+        yield None
+
+
+HttpxClientDep = Annotated[Union["httpx.AsyncClient", None], Depends(get_httpx_client)]
+
+
 def inertia_dependency_factory(
     config_: InertiaConfig,
-) -> Callable[[Request], Inertia]:
+) -> Callable[[Request, HttpxClientDep], Inertia]:
     """
     Create a dependency for Inertia, passing the configuration
     :param config_: InertiaConfig object
     :return: Dependency
     """
 
-    def inertia_dependency(request: Request) -> Inertia:
+    def inertia_dependency(request: Request, client: HttpxClientDep) -> Inertia:
         """
         Dependency for Inertia
         :param request: FastAPI Request object
         :return: Inertia object
         """
-        return Inertia(request, config_)
+        return Inertia(request, config_, client)
 
     return inertia_dependency
