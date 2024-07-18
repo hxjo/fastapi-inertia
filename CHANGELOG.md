@@ -5,12 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.7] - 2024-07-18
+
+- Deprecate `requests` package for SSR in favour of `httpx` package
+- Test for deprecation warning for `httpx` package and `use_typescript` configuration option
+
 ## [0.1.6] - 2024-07-17
 
 - Cache vite manifest content
 - Better type vite manifest
 - Allow for multiple css files to be in the manifest file
-- Deprecate use_typescript in favour of entrypoint_filename
+- Deprecate `use_typescript` in favour of `entrypoint_filename` in InertiaConfig
   - Will be removed in 1.0.0
 - Introduce root_directory to InertiaConfig instead of assuming it
 - Introduce assets_prefix to InertiaConfig instead of assuming it
