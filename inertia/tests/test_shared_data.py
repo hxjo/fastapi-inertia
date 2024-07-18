@@ -4,11 +4,14 @@ from typing import Annotated
 from starlette.testclient import TestClient
 
 from inertia import Inertia, inertia_dependency_factory, InertiaResponse, InertiaConfig
+from .utils import templates
 
 
 app = FastAPI()
 
-InertiaDep = Annotated[Inertia, Depends(inertia_dependency_factory(InertiaConfig()))]
+InertiaDep = Annotated[
+    Inertia, Depends(inertia_dependency_factory(InertiaConfig(templates=templates)))
+]
 
 PROPS = {
     "message": "hello from index",

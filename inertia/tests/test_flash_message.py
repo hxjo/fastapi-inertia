@@ -6,6 +6,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from starlette.testclient import TestClient
 
 from inertia import Inertia, inertia_dependency_factory, InertiaResponse, InertiaConfig
+from .utils import templates
 
 
 app = FastAPI()
@@ -18,14 +19,20 @@ InertiaDep = Annotated[
     Inertia,
     Depends(
         inertia_dependency_factory(
-            InertiaConfig(use_flash_messages=True, flash_message_key=FLASH_MESSAGE_KEY)
+            InertiaConfig(
+                use_flash_messages=True,
+                flash_message_key=FLASH_MESSAGE_KEY,
+                templates=templates,
+            )
         )
     ),
 ]
 InvalidInertiaDep = Annotated[
     Inertia,
     Depends(
-        inertia_dependency_factory(InertiaConfig(flash_message_key=FLASH_MESSAGE_KEY))
+        inertia_dependency_factory(
+            InertiaConfig(flash_message_key=FLASH_MESSAGE_KEY, templates=templates)
+        )
     ),
 ]
 

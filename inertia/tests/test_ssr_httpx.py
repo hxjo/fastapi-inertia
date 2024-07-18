@@ -1,29 +1,22 @@
-from importlib import reload
-import sys
 from typing import TypedDict
 import json
 import os
 from datetime import datetime
-from unittest.mock import patch, MagicMock
+from unittest.mock import AsyncMock, MagicMock
 from fastapi import FastAPI, Depends
 from typing import Annotated, cast
 
 import httpx
-import pytest
 from starlette.testclient import TestClient
 
 from inertia import Inertia, inertia_dependency_factory, InertiaResponse, InertiaConfig
+from inertia.inertia import get_httpx_client
 
-from .utils import assert_response_content
+from .utils import assert_response_content, templates
 
 
 app = FastAPI()
 manifest_json = os.path.join(os.path.dirname(__file__), "dummy_manifest_js.json")
-
-
-@pytest.fixture()
-def reload_inertia() -> None:
-    reload(sys.modules["inertia.inertia"])
 
 
 SSR_URL = "http://some_special_url"
@@ -32,7 +25,11 @@ InertiaDep = Annotated[
     Depends(
         inertia_dependency_factory(
             InertiaConfig(
-                ssr_enabled=True, manifest_json_path=manifest_json, ssr_url=SSR_URL
+                ssr_enabled=True,
+                environment="production",
+                manifest_json_path=manifest_json,
+                ssr_url=SSR_URL,
+                templates=templates,
             )
         )
     ),
@@ -52,22 +49,6 @@ async def index(inertia: InertiaDep) -> InertiaResponse:
     return await inertia.render(COMPONENT, PROPS)
 
 
-@patch.object(httpx.AsyncClient, "post")
-def test_calls_inertia_render(post_function: MagicMock, reload_inertia: None) -> None:
-    with TestClient(app) as client:
-        client.get("/")
-        post_function.assert_called_once_with(
-            url=f"{SSR_URL}/render",
-            json={
-                "component": COMPONENT,
-                "props": EXPECTED_PROPS,
-                "url": f"{client.base_url}/",
-                "version": "1.0",
-            },
-            headers={"Content-Type": "application/json"},
-        )
-
-
 class ReturnedJson(TypedDict):
     head: list[str]
     body: str
@@ -79,18 +60,24 @@ RETURNED_JSON: ReturnedJson = {
 }
 
 
-@patch.object(
-    httpx.AsyncClient, "post", return_value=MagicMock(json=lambda: RETURNED_JSON)
-)
-def test_returns_html(post_function: MagicMock, reload_inertia: None) -> None:
+async def test_returns_html() -> None:
+    async def get_httpx_client_mock() -> AsyncMock:
+        mock = AsyncMock()
+        mocked_response = MagicMock()
+        mocked_response.json.return_value = RETURNED_JSON
+        mock.post.return_value = mocked_response
+        return mock
+
     with open(manifest_json, "r") as manifest_file:
         manifest = json.load(manifest_file)
     css_files = [f"/{file}" for file in manifest["src/main.js"]["css"]]
     js_file = manifest["src/main.js"]["file"]
     js_file = f"/{js_file}"
     with TestClient(app) as client:
+        httpx_mock = await get_httpx_client_mock()
+        app.dependency_overrides[get_httpx_client] = lambda: httpx_mock
         response = client.get("/")
-        post_function.assert_called_once_with(
+        httpx_mock.post.assert_called_once_with(
             url=f"{SSR_URL}/render",
             json={
                 "component": COMPONENT,
@@ -111,10 +98,12 @@ def test_returns_html(post_function: MagicMock, reload_inertia: None) -> None:
         )
 
 
-@patch.object(httpx.AsyncClient, "post", side_effect=Exception())
-def test_fallback_to_classic_if_render_errors(
-    post_function: MagicMock, reload_inertia: None
-) -> None:
+async def test_fallback_to_classic_if_render_errors() -> None:
+    async def get_httpx_client_mock() -> AsyncMock:
+        mock = AsyncMock()
+        mock.post.return_value = httpx.Response(status_code=500)
+        return mock
+
     with open(manifest_json, "r") as manifest_file:
         manifest = json.load(manifest_file)
 
@@ -122,8 +111,10 @@ def test_fallback_to_classic_if_render_errors(
     js_file = manifest["src/main.js"]["file"]
     js_file = f"/{js_file}"
     with TestClient(app) as client:
+        httpx_mock = await get_httpx_client_mock()
+        app.dependency_overrides[get_httpx_client] = lambda: httpx_mock
         response = client.get("/")
-        post_function.assert_called_once_with(
+        httpx_mock.post.assert_called_once_with(
             url=f"{SSR_URL}/render",
             json={
                 "component": COMPONENT,

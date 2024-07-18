@@ -6,6 +6,7 @@ from .exceptions import (
 )
 from .config import InertiaConfig
 from .utils import lazy
+from .templating import InertiaExtension
 
 __all__ = [
     "InertiaResponse",
@@ -16,4 +17,5 @@ __all__ = [
     "InertiaVersionConflictException",
     "InertiaConfig",
     "lazy",
+    "InertiaExtension",
 ]

@@ -15,6 +15,7 @@ from inertia import (
     inertia_version_conflict_exception_handler,
     inertia_request_validation_exception_handler,
 )
+from .utils import templates
 
 
 app = FastAPI()
@@ -30,7 +31,12 @@ app.add_exception_handler(
 )
 
 InertiaDep = Annotated[
-    Inertia, Depends(inertia_dependency_factory(InertiaConfig(use_flash_errors=True)))
+    Inertia,
+    Depends(
+        inertia_dependency_factory(
+            InertiaConfig(use_flash_errors=True, templates=templates)
+        )
+    ),
 ]
 
 

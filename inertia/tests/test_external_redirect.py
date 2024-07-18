@@ -10,6 +10,7 @@ from inertia import (
     InertiaVersionConflictException,
     inertia_version_conflict_exception_handler,
 )
+from .utils import templates
 
 
 app = FastAPI()
@@ -18,7 +19,9 @@ app.add_exception_handler(
     inertia_version_conflict_exception_handler,  # type: ignore[arg-type]
 )
 
-InertiaDep = Annotated[Inertia, Depends(inertia_dependency_factory(InertiaConfig()))]
+InertiaDep = Annotated[
+    Inertia, Depends(inertia_dependency_factory(InertiaConfig(templates=templates)))
+]
 
 PROPS = {
     "message": "hello from index",

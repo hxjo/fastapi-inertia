@@ -5,9 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2024-07-18
+
+- [BREAKING CHANGE] Introduce templating via Jinja2 instead of a raw HTML string
+  - For migration guide, see [the migration guide](./DEPRECATION_AND_MIGRATION_GUIDE.md#use-jinja2-template-instead-of-a-raw-html-string)
+- [BREAKING CHANGE] Remove deprecated use of `requests`
+  - For migration guide, see [the migration guide](./DEPRECATION_AND_MIGRATION_GUIDE.md#requests-package-for-ssr)
+- [BREAKING CHANGE] Remove deprecated use of `use_typescript`
+  - For migration guide, see [the migration guide](./DEPRECATION_AND_MIGRATION_GUIDE.md#use_typescript-configuration-option)
+
 ## [0.1.7] - 2024-07-18
 
 - Deprecate `requests` package for SSR in favour of `httpx` package
+  - Removed in 1.0.0
+  - For migration guide, see [the migration guide](./DEPRECATION_AND_MIGRATION_GUIDE.md#requests-package-for-ssr)
 - Test for deprecation warning for `httpx` package and `use_typescript` configuration option
 
 ## [0.1.6] - 2024-07-17
@@ -16,7 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Better type vite manifest
 - Allow for multiple css files to be in the manifest file
 - Deprecate `use_typescript` in favour of `entrypoint_filename` in InertiaConfig
-  - Will be removed in 1.0.0
+  - Removed in 1.0.0
+  - For migration guide, see [the migration guide](./DEPRECATION_AND_MIGRATION_GUIDE.md#use_typescript-configuration-option)
 - Introduce root_directory to InertiaConfig instead of assuming it
 - Introduce assets_prefix to InertiaConfig instead of assuming it
 

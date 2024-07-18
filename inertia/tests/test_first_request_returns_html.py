@@ -9,7 +9,7 @@ from starlette.testclient import TestClient
 
 from inertia import Inertia, inertia_dependency_factory, InertiaResponse, InertiaConfig
 
-from .utils import assert_response_content
+from .utils import assert_response_content, templates
 
 app = FastAPI()
 manifest_json = os.path.join(os.path.dirname(__file__), "dummy_manifest_js.json")
@@ -17,17 +17,28 @@ manifest_json_ts = os.path.join(os.path.dirname(__file__), "dummy_manifest_ts.js
 
 CUSTOM_URL = "http://some_other_url"
 
-InertiaDep = Annotated[Inertia, Depends(inertia_dependency_factory(InertiaConfig()))]
+InertiaDep = Annotated[
+    Inertia, Depends(inertia_dependency_factory(InertiaConfig(templates=templates)))
+]
 
 CustomUrlInertiaDep = Annotated[
-    Inertia, Depends(inertia_dependency_factory(InertiaConfig(dev_url=CUSTOM_URL)))
+    Inertia,
+    Depends(
+        inertia_dependency_factory(
+            InertiaConfig(dev_url=CUSTOM_URL, templates=templates)
+        )
+    ),
 ]
 
 ProductionInertiaDep = Annotated[
     Inertia,
     Depends(
         inertia_dependency_factory(
-            InertiaConfig(manifest_json_path=manifest_json, environment="production")
+            InertiaConfig(
+                manifest_json_path=manifest_json,
+                environment="production",
+                templates=templates,
+            )
         )
     ),
 ]
@@ -41,6 +52,7 @@ ProductionWithAssetPrefixInertiaDep = Annotated[
                 manifest_json_path=manifest_json,
                 environment="production",
                 assets_prefix="/assets",
+                templates=templates,
             )
         )
     ),
@@ -48,7 +60,11 @@ ProductionWithAssetPrefixInertiaDep = Annotated[
 
 TypescriptInertiaDep = Annotated[
     Inertia,
-    Depends(inertia_dependency_factory(InertiaConfig(entrypoint_filename="main.ts"))),
+    Depends(
+        inertia_dependency_factory(
+            InertiaConfig(entrypoint_filename="main.ts", templates=templates)
+        )
+    ),
 ]
 
 TypescriptProductionInertiaDep = Annotated[
@@ -59,6 +75,7 @@ TypescriptProductionInertiaDep = Annotated[
                 manifest_json_path=manifest_json_ts,
                 environment="production",
                 entrypoint_filename="main.ts",
+                templates=templates,
             )
         )
     ),
