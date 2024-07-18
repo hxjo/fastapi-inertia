@@ -33,7 +33,7 @@ class InertiaExtension(Extension):
             )
 
         if inertia.is_ssr:
-            if not inertia.ssr_head:
+            if inertia.ssr_head is None:
                 raise ValueError("SSR is enabled but no SSR head was provided")
             fragments.append(inertia.ssr_head)
 
@@ -47,11 +47,11 @@ class InertiaExtension(Extension):
         fragments: list[str] = []
         inertia: InertiaContext = context["inertia"]
         if inertia.is_ssr:
-            if not inertia.ssr_body:
+            if inertia.ssr_body is None:
                 raise ValueError("SSR is enabled but no SSR body was provided")
             fragments.append(inertia.ssr_body)
         else:
-            if not inertia.data:
+            if inertia.data is None:
                 raise ValueError("No data was provided for the Inertia page")
             fragments.append(f"<div id=\"app\" data-page='{inertia.data}'></div>")
 
