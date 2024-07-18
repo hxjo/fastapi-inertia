@@ -5,13 +5,9 @@
 - [Inertia.js FastAPI Adapter](#inertiajs-fastapi-adapter)
   - [Installation](#installation)
   - [Configuration](#configuration)
-  - [Deprecated features and migration guide](#deprecated-features-and-migration-guide)
-    - [`use_typescript` configuration option](#use_typescript-configuration-option)
-      - [Migration guide](#migration-guide)
-    - [`requests` package for SSR](#requests-package-for-ssr)
-      - [Migration guide](#migration-guide-1)
   - [Examples](#examples)
   - [Usage](#usage)
+    - [Create a Jinja2Template](#create-a-jinja2template)
     - [Set up the dependency](#set-up-the-dependency)
     - [Rendering a page](#rendering-a-page)
     - [Rendering assets](#rendering-assets)
@@ -39,58 +35,49 @@ pip install fastapi-inertia
 You can configure the adapter by passing a `InertiaConfig` object to the `Inertia` class.
 The following options are available:
 
-| key                 | default                | options                                 | description                                                                                                                                  |
-| ------------------- | ---------------------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| environment         | development            | development,production                  | The environment to use                                                                                                                       |
-| version             | 1.0.0                  | Any valid string                        | The version of your server                                                                                                                   |
-| json_encoder        | InertiaJsonEncoder     | Any class that extends json.JSONEncoder | The JSON encoder used to encode page data when HTML is returned                                                                              |
-| manifest_json_path  | ""                     | Any valid path                          | The path to the manifest.json file. Needed in production                                                                                     |
-| dev_url             | http://localhost:5173  | Any valid url                           | The URL to the development server                                                                                                            |
-| ssr_url             | http://localhost:13714 | Any valid url                           | The URL to the SSR server                                                                                                                    |
-| ssr_enabled         | False                  | True,False                              | Whether to [enable SSR](#enable-ssr). You need to install the `httpx` package, to have set the manifest_json_path and started the SSR server |
-| root_directory      | src                    | Any valid path                          | The directory in which is located the javascript code in your frontend. Will be used to find the relevant files in your manifest.json.       |
-| entrypoint_filename | main.js                | Any valid file                          | The entrypoint for you frontend. Will be used to find the relevant files in your manifest.json.                                              |
-| assets_prefix       | ""                     | Any valid string                        | An optional prefix for your assets. Will prefix the links generated from the assets mentioned in manifest.json.                              |
-| use_typescript      | False                  | True,False                              | Whether to use TypeScript                                                                                                                    |
-| use_flash_messages  | False                  | True,False                              | Whether to use [flash messages](#flash-messages). You need to use Starlette's SessionMiddleware to use this feature                          |
-| flash_message_key   | messages               | Any valid string                        | The key to use for [flash errors](#flash-errors)                                                                                             |
-| use_flash_errors    | False                  | True,False                              | Whether to use flash errors                                                                                                                  |
-| flash_error_key     | errors                 | Any valid string                        | The key to use for flash errors                                                                                                              |
-
-## Deprecated features and migration guide
-
-> [!WARNING]  
-> The items mentioned in this part are deprecated and will be removed in a future version.
-
-### `use_typescript` configuration option
-
-The `use_typescript` configuration option has been deprecated in favour of `entrypoint_filename`.  
-It has been done for the following reason(s):
-
-- To ensure library users are not restricted to the `main.{ext}` pattern when it comes to the entrypoint
-
-#### Migration guide
-
-- Remove the `use_typescript` from your configuration options
-- Add the `entrypoint_filename` option to the configuration ; the value would be `main.ts` if it is your webapp entrypoint's filename.
-
-### `requests` package for SSR
-
-The `requests` package requirement has been changed for a `httpx` package requirement.  
-It has been done for the following reason(s):
-
-- To leverage the async capabilities of httpx.AsyncClient
-
-#### Migration guide
-
-- Install the `httpx` package
-- (Optionally, if not used elsewhere in your application) Remove the `requests` package
+| key                    | default                | options                                 | description                                                                                                                                  |
+| ---------------------- | ---------------------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| environment            | development            | development,production                  | The environment to use                                                                                                                       |
+| version                | 1.0.0                  | Any valid string                        | The version of your server                                                                                                                   |
+| json_encoder           | InertiaJsonEncoder     | Any class that extends json.JSONEncoder | The JSON encoder used to encode page data when HTML is returned                                                                              |
+| manifest_json_path     | ""                     | Any valid path                          | The path to the manifest.json file. Needed in production                                                                                     |
+| dev_url                | http://localhost:5173  | Any valid url                           | The URL to the development server                                                                                                            |
+| ssr_url                | http://localhost:13714 | Any valid url                           | The URL to the SSR server                                                                                                                    |
+| ssr_enabled            | False                  | True,False                              | Whether to [enable SSR](#enable-ssr). You need to install the `httpx` package, to have set the manifest_json_path and started the SSR server |
+| root_directory         | src                    | Any valid path                          | The directory in which is located the javascript code in your frontend. Will be used to find the relevant files in your manifest.json.       |
+| entrypoint_filename    | main.js                | Any valid file                          | The entrypoint for you frontend. Will be used to find the relevant files in your manifest.json.                                              |
+| assets_prefix          | ""                     | Any valid string                        | An optional prefix for your assets. Will prefix the links generated from the assets mentioned in manifest.json.                              |
+| use_flash_messages     | False                  | True,False                              | Whether to use [flash messages](#flash-messages). You need to use Starlette's SessionMiddleware to use this feature                          |
+| flash_message_key      | messages               | Any valid string                        | The key to use for [flash errors](#flash-errors)                                                                                             |
+| use_flash_errors       | False                  | True,False                              | Whether to use flash errors                                                                                                                  |
+| flash_error_key        | errors                 | Any valid string                        | The key to use for flash errors                                                                                                              |
+| templates              | None                   | A Jinja2Templates instance              | The templates instance in which Inertia will look for the `root_template_filename` template                                                  |
+| root_template_filename | index.html             | Any valid jinja2 template file          | The file which will be used to render your inertia application                                                                               |
 
 ## Examples
 
 You can see different full examples in the [following repository](https://github.com/hxjo/fastapi-inertia-examples).
 
 ## Usage
+
+### Create a Jinja2Template
+
+In order to use the Inertia.js adapter, you have to create a Jinja2Template that the library will use.
+
+It **must** have both an `inertia_head` and an `inertia_body` tag in it.
+
+- `inertia_head` is where the library will place the code that supposedly goes inside the HTML `head` tag
+- `inertia_body` is where the library will place the code that supposedly goes inside the HTML `body` tag
+
+You can find the simplest example in `inertia/tests/templates/index.html`.  
+You should then register the folder in which you put this file as the directory of your Jinja2Templates
+
+```python
+templates = Jinja2Templates(directory=template_dir)
+```
+
+This option should be passed to the InertiaConfig class presented below, under the `templates` key.
+If you choose a different template file name than `index.html`, you can also pass the `root_template_filename` key with, as value, your template file name.
 
 ### Set up the dependency
 

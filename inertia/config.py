@@ -1,5 +1,4 @@
-from typing import Literal, Type, Union
-import warnings
+from typing import Literal, Type
 from json import JSONEncoder
 
 from fastapi.templating import Jinja2Templates
@@ -29,13 +28,3 @@ class InertiaConfig:
     flash_message_key: str = "messages"
     flash_error_key: str = "errors"
     assets_prefix: str = ""
-    use_typescript: Union[bool, None] = None
-
-    def __post_init__(self) -> None:
-        if self.use_typescript is not None:
-            warnings.warn(
-                "use_typescript is deprecated: Please use entrypoint_filename instead. It will be removed in 1.0.0",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            self.entrypoint_filename = "main.ts" if self.use_typescript else "main.js"

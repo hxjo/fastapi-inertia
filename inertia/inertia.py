@@ -1,6 +1,5 @@
 import logging
 import os
-import warnings
 
 from fastapi import Depends, Request, Response, status
 from fastapi.responses import JSONResponse, HTMLResponse
@@ -29,10 +28,6 @@ from .exceptions import InertiaVersionConflictException
 from .utils import LazyProp
 from dataclasses import dataclass
 
-try:
-    import requests
-except (ModuleNotFoundError, ImportError):
-    requests = None  # type: ignore
 
 try:
     import httpx
@@ -173,22 +168,13 @@ class Inertia:
             else {}
         )
 
-    def _assert_a_request_package_is_installed(self) -> None:
+    def _assert_httpx_is_installed(self) -> None:
         """
-        Assert that at least one of the request packages is installed (httpx or requests)
-        :raises ImportError: If none of the packages are
-        :warns DeprecatedWarning: If requests is installed
+        Assert that httpx is installed
+        :raises ImportError: If httpx is not installed
         """
-        if not httpx and not requests:
-            raise ImportError(
-                "You need to install either requests or httpx to use Inertia in SSR mode"
-            )
-        if requests:
-            warnings.warn(
-                "requests is deprecated: Please use httpx instead. It will be removed in 1.0.0",
-                DeprecationWarning,
-                stacklevel=2,
-            )
+        if not httpx:
+            raise ImportError("You need to install httpx to use Inertia in SSR mode")
 
     def _set_inertia_files(self) -> None:
         """
@@ -258,57 +244,23 @@ class Inertia:
 
         return self._deep_transform_callables(_props)
 
-    def _get_html_content(self, head: str, body: str) -> str:
-        """
-        Get the HTML content for the response
-        :param head: The content for the head tag
-        :param body: The content for the body tag
-        :return: The HTML content
-        """
-        css_links = (
-            "\n".join(
-                [
-                    f'<link rel="stylesheet" href="{url}">'
-                    for url in self._inertia_files.css_file_urls
-                ]
-            )
-            if len(self._inertia_files.css_file_urls) > 0
-            else ""
-        )
-
-        return f"""
-                   <!DOCTYPE html>
-                   <html>
-                       <head>
-                            <meta charset="UTF-8">
-                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                            {head}
-                            {css_links}
-                        </head>
-                        <body>
-                            {body}
-                            <script type="module" src="{self._inertia_files.js_file_url}"></script>
-                       </body>
-                   </html>
-                   """
-
     async def _render_ssr(self) -> HTMLResponse:
         """
         Render the page using SSR, calling the Inertia SSR server.
         :return: The HTML response
         """
-        self._assert_a_request_package_is_installed()
+        self._assert_httpx_is_installed()
         data = json.dumps(self._get_page_data(), cls=self._config.json_encoder)
         request_kwargs: Dict[str, Any] = {
             "url": f"{self._config.ssr_url}/render",
             "json": data,
             "headers": {"Content-Type": "application/json"},
         }
-        response: Union["httpx._models.Response", "requests.Response"]
-        if self._client is not None:
-            response = await self._client.post(**request_kwargs)
-        else:
-            response = requests.post(**request_kwargs)
+
+        if self._client is None:
+            raise ValueError("httpx client is not available")
+
+        response = await self._client.post(**request_kwargs)
 
         response.raise_for_status()
         response_json = response.json()
@@ -453,12 +405,10 @@ class Inertia:
 
 
 async def get_httpx_client() -> AsyncGenerator[Union[None, "httpx.AsyncClient"], None]:
-    try:
-        async with httpx.AsyncClient() as client:
-            yield client
-    except Exception as e:
-        logger.error(f"An error occurred in creating the HTTPX client: {e}")
+    if not httpx:
         yield None
+    async with httpx.AsyncClient() as client:
+        yield client
 
 
 HttpxClientDep = Annotated[Union["httpx.AsyncClient", None], Depends(get_httpx_client)]
