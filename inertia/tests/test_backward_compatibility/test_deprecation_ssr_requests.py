@@ -56,8 +56,7 @@ def fail_httpx_import_module_not_found() -> Generator[None, None, None]:
 
     yield
 
-    # Reset sys.meta_path and sys.modules after the test
-    # sys.meta_path.remove(import_raiser)
+    sys.meta_path.remove(import_raiser)
     if "httpx" not in sys.modules and original_httpx is not None:
         sys.modules["httpx"] = original_httpx
 
@@ -82,8 +81,7 @@ def fail_httpx_import() -> Generator[None, None, None]:
 
     yield
 
-    # Reset sys.meta_path and sys.modules after the test
-    # sys.meta_path.remove(import_raiser)
+    sys.meta_path.remove(import_raiser)
     if "httpx" not in sys.modules and original_httpx is not None:
         sys.modules["httpx"] = original_httpx
 

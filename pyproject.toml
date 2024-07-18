@@ -50,7 +50,7 @@ check_untyped_defs = true
 
 
 [tool.poe.tasks]
-test = "pytest inertia/tests --cov inertia --cov-report term-missing"
+test = "pytest inertia/tests --cov inertia --cov-report term-missing  --cov-fail-under=98"
 type_check = "mypy inertia"
 format = "ruff format inertia"
 lint = "ruff check inertia --fix"
