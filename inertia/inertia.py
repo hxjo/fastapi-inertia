@@ -10,7 +10,6 @@ from typing import (
     Callable,
     Dict,
     List,
-    Optional,
     TypeVar,
     TypedDict,
     Union,
@@ -204,7 +203,15 @@ class Inertia:
 
     @classmethod
     def _deep_transform_callables(
-        cls, prop: Union[Callable[..., Any], Dict[str, Any], BaseModel, Any]
+        cls,
+        prop: Union[
+            Callable[..., Any],
+            Dict[str, Any],
+            BaseModel,
+            List[BaseModel],
+            List[Any],
+            Any,
+        ],
     ) -> Any:
         """
         Deeply transform callables in a dictionary, evaluating them if they are callables
@@ -219,6 +226,8 @@ class Inertia:
                 return prop()
             if isinstance(prop, BaseModel):
                 return json.loads(prop.model_dump_json())
+            if isinstance(prop, list):
+                return [cls._deep_transform_callables(p) for p in prop]
             return prop
 
         prop_ = prop.copy()
@@ -350,7 +359,7 @@ class Inertia:
         )
 
     async def render(
-        self, component: str, props: Optional[Dict[str, Any]] = None
+        self, component: str, props: Union[Dict[str, Any], BaseModel, None] = None
     ) -> InertiaResponse:
         """
         Render the page
