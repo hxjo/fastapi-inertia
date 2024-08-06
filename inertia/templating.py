@@ -13,7 +13,7 @@ class InertiaExtension(Extension):
     to a jinja environment to render the head and body of the Inertia.js page.
     """
 
-    tags = set(["inertia_head", "inertia_body"])
+    tags = set(["inertia_head", "inertia_body", "inertia_react_refresh"])
 
     def parse(self, parser: Parser) -> nodes.Node:
         tag_name = next(parser.stream).value
@@ -57,3 +57,15 @@ class InertiaExtension(Extension):
 
         fragments.append(f'<script type="module" src="{inertia.js}"></script>')
         return Markup("\n".join(fragments))
+    
+    def _render_inertia_react_refresh(self, context: Context) -> Markup:
+       inertia: InertiaContext = context["inertia"]
+       if inertia.environment != "development":
+              return ""
+       return Markup(f"""<script type="module">
+            import RefreshRuntime from '{inertia.dev_url}/@react-refresh'
+            RefreshRuntime.injectIntoGlobalHook(window)
+            window.$RefreshReg$ = () => {{}}
+            window.$RefreshSig$ = () => (type) => type
+            window.__vite_plugin_react_preamble_installed__ = true
+        </script>""")
