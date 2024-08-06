@@ -57,12 +57,12 @@ class InertiaExtension(Extension):
 
         fragments.append(f'<script type="module" src="{inertia.js}"></script>')
         return Markup("\n".join(fragments))
-    
-    def _render_inertia_react_refresh(self, context: Context) -> Markup:
-       inertia: InertiaContext = context["inertia"]
-       if inertia.environment != "development":
-              return ""
-       return Markup(f"""<script type="module">
+
+    def _render_inertia_react_refresh(self, context: Context) -> Markup|str:
+        inertia: InertiaContext = context["inertia"]
+        if inertia.environment != "development":
+            return ""
+        return Markup(f"""<script type="module">
             import RefreshRuntime from '{inertia.dev_url}/@react-refresh'
             RefreshRuntime.injectIntoGlobalHook(window)
             window.$RefreshReg$ = () => {{}}

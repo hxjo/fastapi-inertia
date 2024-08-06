@@ -54,16 +54,20 @@ def test_extension_render_body_no_ssr_raises_if_no_data() -> None:
             }  #  type: ignore
         )
 
+
 def test_extension_render_react_refresh_returns_nothing_if_not_dev() -> None:
     extension = InertiaExtension(env)
-    assert extension._render_inertia_react_refresh(
-        {
-            "inertia": InertiaContext(
-                environment="production",
-                dev_url="http://localhost:5173",
-                is_ssr=False,
-                css=["/app.css"],
-                js="/app.js",
-            )
-        }  #  type: ignore
-    ) == ""
+    assert (
+        extension._render_inertia_react_refresh(
+            {
+                "inertia": InertiaContext(
+                    environment="production",
+                    dev_url="http://localhost:5173",
+                    is_ssr=False,
+                    css=["/app.css"],
+                    js="/app.js",
+                )
+            }  #  type: ignore
+        )
+        == ""
+    )
