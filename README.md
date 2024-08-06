@@ -72,6 +72,9 @@ It **must** have both an `inertia_head` and an `inertia_body` tag in it.
 You can find the simplest example in `inertia/tests/templates/index.html`.  
 You should then register the folder in which you put this file as the directory of your Jinja2Templates
 
+**Note**: If your frontend uses react + vite for developement, you need to add `inertia_react_refresh` tag at the top of your template. See an example in the `examples/react` directory.
+You can read more about this [here](https://github.com/vitejs/vite/issues/1984#issuecomment-778289660)
+
 ```python
 templates = Jinja2Templates(directory=template_dir)
 ```

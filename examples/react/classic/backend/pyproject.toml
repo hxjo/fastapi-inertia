@@ -1,0 +1,16 @@
+[tool.poetry]
+package-mode = false
+name = "typescript-classic-backend"
+
+[tool.poetry.dependencies]
+python = ">=3.11, <3.12"
+fastapi = "^0.111.0"
+uvicorn = "^0.29.0"
+pydantic = {extras = ["email"], version = "^2.7.1"}
+itsdangerous = "^2.2.0"
+fastapi-inertia = "^1.0.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
