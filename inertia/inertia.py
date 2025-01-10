@@ -397,7 +397,7 @@ class Inertia:
         # Fallback to server-side template rendering
         page_json = json.dumps(
             json.dumps(self._get_page_data(), cls=self._config.json_encoder)
-        )
+        ).replace("'", r"\u0027")
         return self._config.templates.TemplateResponse(
             name=self._config.root_template_filename,
             request=self._request,
