@@ -18,7 +18,7 @@ from typing import (
 import json
 from pydantic import BaseModel
 from starlette.responses import RedirectResponse
-
+from jinja2.utils import htmlsafe_json_dumps
 
 from .templating import InertiaExtension
 from .config import InertiaConfig
@@ -395,9 +395,8 @@ class Inertia:
                 )
 
         # Fallback to server-side template rendering
-        page_json = json.dumps(
-            json.dumps(self._get_page_data(), cls=self._config.json_encoder)
-        )
+        json_string = json.dumps(self._get_page_data(), cls=self._config.json_encoder)
+        page_json = htmlsafe_json_dumps(json_string)
         return self._config.templates.TemplateResponse(
             name=self._config.root_template_filename,
             request=self._request,
