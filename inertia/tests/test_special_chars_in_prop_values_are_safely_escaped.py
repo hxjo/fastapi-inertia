@@ -50,3 +50,4 @@ def test_special_chars_are_escaped() -> None:
             expected_props=EXPECTED_PROPS,
             expected_url=expected_url,
         )
+
