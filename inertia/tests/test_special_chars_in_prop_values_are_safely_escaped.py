@@ -25,7 +25,7 @@ COMPONENT = "IndexPage"
 async def index(inertia: InertiaDep) -> InertiaResponse:
     return await inertia.render(COMPONENT, PROPS)
 
-def test_first_request_returns_html() -> None:
+def test_special_chars_are_escaped() -> None:
     with TestClient(app) as client:
         response = client.get("/")
         
