@@ -29,7 +29,7 @@ If a breaking change is introduced, it must be introduced in two steps:
 ### Changes documentation
 Once you're done with your work, you must add an entry to the CHANGELOG.md, describing 
 your changes.
-
+Please make sure to explain why, and what you did in your PR description.
 
 ## Tests
 
@@ -44,6 +44,15 @@ This repository adheres to semantic versioning.
 It is vital to respect it, and to not introduce a breaking change without a major update.
 Every pull request must come with a bump of the version specified in the `pyproject.toml`,
 so a new version can properly be deployed.
+
+## Working together
+
+When you start working from an issue, please take a moment to:
+1. Write a comment, explaining that you're on it
+2. Create a pull request immediately, mentioning that it's a WIP
+3. If you encounter difficulties, write comments on the pull request so that
+others can contribute with their ideas, and so that we can know you're still working on it
+
 
 ## Tools
 
