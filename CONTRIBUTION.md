@@ -39,7 +39,15 @@ The code coverage limit is set to 98%.
 
 
 ## Versioning
+
 This repository adheres to semantic versioning. 
 It is vital to respect it, and to not introduce a breaking change without a major update.
 Every pull request must come with a bump of the version specified in the `pyproject.toml`,
 so a new version can properly be deployed.
+
+## Tools
+
+This project uses [poetry](https://python-poetry.org/docs/) to handle dependencies and local environment.
+This project uses [poethepoet](https://poethepoet.natn.io/index.html) to define some useful tasks for the project.
+You can use them, after having activated your environment, through `poe ${command_name}`
+If you find yourself missing a command, feel free to add and document it.

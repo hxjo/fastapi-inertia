@@ -40,18 +40,18 @@ def test_special_chars_are_escaped() -> None:
         assert match, "Could not find the div with id 'app' and a data-page attribute."
         data_page_value = match.group(2)
 
-        assert (
-            "<" not in data_page_value
-        ), "Expected '<' to be escaped as \\u003c in data-page."
-        assert (
-            ">" not in data_page_value
-        ), "Expected '>' to be escaped as \\u003e in data-page."
-        assert (
-            "&" not in data_page_value
-        ), "Expected '&' to be escaped as \\u0026 in data-page."
-        assert (
-            "'" not in data_page_value
-        ), "Expected '<' to be escaped as \\u0027 in data-page."
+        assert "<" not in data_page_value, (
+            "Expected '<' to be escaped as \\u003c in data-page."
+        )
+        assert ">" not in data_page_value, (
+            "Expected '>' to be escaped as \\u003e in data-page."
+        )
+        assert "&" not in data_page_value, (
+            "Expected '&' to be escaped as \\u0026 in data-page."
+        )
+        assert "'" not in data_page_value, (
+            "Expected '<' to be escaped as \\u0027 in data-page."
+        )
 
         expected_url = str(client.base_url) + "/"
         assert_response_content(
