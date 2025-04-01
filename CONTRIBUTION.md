@@ -53,6 +53,12 @@ When you start working from an issue, please take a moment to:
 3. If you encounter difficulties, write comments on the pull request so that
 others can contribute with their ideas, and so that we can know you're still working on it
 
+Through your work on the pull request, please make sure to have commits that make sense for anyone.
+The commits should consist of :
+1. Blocks of work that fit together
+2. Have a name that briefly explain what it is about.
+You do not have to follow conventional commits or any specific pattern,
+just make sure that when one looks at the PR, and reviews it commit by commit, it makes sense.
 
 ## Tools
 
