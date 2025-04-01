@@ -60,3 +60,9 @@ This project uses [poetry](https://python-poetry.org/docs/) to handle dependenci
 This project uses [poethepoet](https://poethepoet.natn.io/index.html) to define some useful tasks for the project.
 You can use them, after having activated your environment, through `poe ${command_name}`
 If you find yourself missing a command, feel free to add and document it.
+
+## Validation
+
+Once you are satisfied with your work, and you took care of all points mentioned above,
+please mention me in a comment to let me know I should review the pull request.
+
