@@ -19,10 +19,10 @@ You must also update the examples folder accordingly, both for classic and SSR i
 
 
 If a breaking change is introduced, it must be introduced in two steps:
-1. Deprecation
+1. Deprecation  
   In this step, you must ensure the app remain completely functional, and mark the 
   usage as deprecated.
-2. Removal
+2. Removal  
   In this step, you must remove the previous implementation, and write a guide in the 
   DEPRECATION_AND_MIGRATION_GUIDE.md
 
@@ -56,7 +56,7 @@ others can contribute with their ideas, and so that we can know you're still wor
 Through your work on the pull request, please make sure to have commits that make sense for anyone.
 The commits should consist of :
 1. Blocks of work that fit together
-2. Have a name that briefly explain what it is about.
+2. Have a name that briefly explain what it is about.  
 You do not have to follow conventional commits or any specific pattern,
 just make sure that when one looks at the PR, and reviews it commit by commit, it makes sense.
 
