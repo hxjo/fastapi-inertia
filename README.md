@@ -3,6 +3,7 @@
 <!-- TOC -->
 
 - [Inertia.js FastAPI Adapter](#inertiajs-fastapi-adapter)
+  - [Contribution](#contribution)
   - [Installation](#installation)
   - [Configuration](#configuration)
   - [Examples](#examples)
@@ -21,6 +22,10 @@
     - [For a classic build](#for-a-classic-build)
     - [For a SSR build](#for-a-ssr-build)
     - [Performance note](#performance-note)
+
+## Contribution
+
+If you wish to contribute, please follow the [contribution guide](CONTRIBUTION.md)
 
 ## Installation
 
