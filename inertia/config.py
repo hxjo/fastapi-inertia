@@ -1,9 +1,9 @@
-from typing import Literal, Type
+from typing import Literal, Type, Dict, Any
 from json import JSONEncoder
 
 from fastapi.templating import Jinja2Templates
 from .utils import InertiaJsonEncoder
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -28,3 +28,4 @@ class InertiaConfig:
     flash_message_key: str = "messages"
     flash_error_key: str = "errors"
     assets_prefix: str = ""
+    extra_template_context: Dict[str, Any] = field(default_factory=dict)

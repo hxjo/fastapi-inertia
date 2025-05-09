@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.6] - 2025-05-11
+
+- Added support to pass extra context to the template via the `extra_template_context` option in `InertiaConfig`
+
 ## [1.0.4] - 2025-02-23
 
 - Fix: safely escape special characters in JSON payload to avoid ([#30](https://github.com/hxjo/fastapi-inertia/issues/30)) -- @mofman

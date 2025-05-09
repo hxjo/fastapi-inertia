@@ -58,6 +58,7 @@ The following options are available:
 | flash_error_key        | errors                 | Any valid string                        | The key to use for flash errors                                                                                                              |
 | templates              | None                   | A Jinja2Templates instance              | The templates instance in which Inertia will look for the `root_template_filename` template                                                  |
 | root_template_filename | index.html             | Any valid jinja2 template file          | The file which will be used to render your inertia application                                                                               |
+| extra_template_context | dict()                 | Any valid dictionary of type Dict[str, Any]                          | Extra context to pass to the template. You can use it to pass any variable to the template |
 
 ## Examples
 
