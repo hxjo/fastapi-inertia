@@ -409,6 +409,7 @@ class Inertia:
                     js=self._inertia_files.js_file_url,
                     css=self._inertia_files.css_file_urls,
                 ),
+                **self._config.extra_template_context,
             },
         )
 
