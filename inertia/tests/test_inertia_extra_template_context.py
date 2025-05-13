@@ -46,5 +46,5 @@ def test_adding_extra_template_context() -> None:
         response = client.get("/")
         assert response.status_code == 200
 
-        pattern = r'<div>Context value</div>'
+        pattern = r"<div>Context value</div>"
         assert re.search(pattern, response.text)
