@@ -22,7 +22,8 @@ InertiaDep = Annotated[
 PROPS = {
     "always_str": "hello from str",
     "always_func": lambda: "hello from func",
-    "lazy": lazy(lambda: "hello from lazy"),
+    "lazy_callable": lazy(lambda: "hello from lazy callable"),
+    "lazy_value": lazy("hello from lazy value"),
 }
 
 COMPONENT = "IndexPage"
@@ -55,7 +56,7 @@ def test_partial_reload_include_lazy() -> None:
             "/",
             headers={
                 "X-Inertia": "true",
-                "X-Inertia-Partial-Data": "lazy",
+                "X-Inertia-Partial-Data": "lazy_callable,lazy_value",
                 "X-Inertia-Partial-Component": COMPONENT,
             },
         )
@@ -64,7 +65,8 @@ def test_partial_reload_include_lazy() -> None:
         assert response.json() == {
             "component": COMPONENT,
             "props": {
-                "lazy": "hello from lazy",
+                "lazy_callable": "hello from lazy callable",
+                "lazy_value": "hello from lazy value",
             },
             "url": f"{client.base_url}/",
             "version": "1.0",

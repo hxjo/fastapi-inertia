@@ -1,8 +1,10 @@
 <script setup>
-import {Link, useForm} from "@inertiajs/vue3";
+import {Link, useForm, Deferred} from "@inertiajs/vue3";
 
 defineProps({
   message: String,
+  permissions: Array,
+  usersData: Object,
 });
 
 const form = useForm({
@@ -14,6 +16,26 @@ const form = useForm({
 
 <template>
   <main>
+    <div class="deferred-section">
+      <h2>Permissions</h2>
+      <Deferred data="permissions">
+        <template #fallback>
+          <div>Loading permissions...</div>
+        </template>
+        <div v-for="permission in permissions" :key="permission">
+          {{ permission }}
+        </div>
+      </Deferred>
+
+      <h2>Users Data</h2>
+      <Deferred data="usersData">
+        <template #fallback>
+          <div>Loading users data...</div>
+        </template>
+        <pre>{{ usersData }}</pre>
+      </Deferred>
+    </div>
+
     <Link href="/">Link to index page</Link>
     <div class="props">
       <h1>Props</h1>
