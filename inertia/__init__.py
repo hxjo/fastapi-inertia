@@ -5,7 +5,7 @@ from .exceptions import (
     inertia_request_validation_exception_handler,
 )
 from .config import InertiaConfig
-from .utils import lazy
+from .utils import lazy, defer
 from .templating import InertiaExtension
 
 __all__ = [
@@ -17,5 +17,6 @@ __all__ = [
     "InertiaVersionConflictException",
     "InertiaConfig",
     "lazy",
+    "defer",
     "InertiaExtension",
 ]
