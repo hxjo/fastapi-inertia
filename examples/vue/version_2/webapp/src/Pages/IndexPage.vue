@@ -1,32 +1,27 @@
 <script setup>
-import {Link, useForm} from "@inertiajs/vue3";
+import { Link } from "@inertiajs/vue3";
+import { ref } from "vue";
 
 defineProps({
   message: String,
 });
 
-const form = useForm({
-  email: null,
-  password: null,
-})
-
+const counter = ref(0);
 </script>
 
 <template>
   <main>
-    <Link href="/">Link to index page</Link>
+    <Link href="/2">Link to other page</Link>
+    <Link href="/" :only="['lazy_prop']">Partial reload (only lazy prop)</Link>
+    <button @click="counter++">
+      Reactive button (clicked {{ counter }} times)
+    </button>
     <div class="props">
       <h1>Props</h1>
       <span> Message: {{ message }} </span>
       <span> Flashed messages: {{ $page.props.messages }} </span>
+      <span> Lazy prop: {{ $page.props.lazy_prop }} </span>
     </div>
-    <form @submit.prevent="form.post('/login')">
-    <input type="text" placeholder="email" v-model="form.email">
-    <div v-if="form.errors.email">{{ form.errors.email }}</div>
-    <input type="password" placeholder="password" v-model="form.password">
-    <div v-if="form.errors.password">{{ form.errors.password }}</div>
-    <button type="submit" :disabled="form.processing">Login</button>
-  </form>
   </main>
 </template>
 
@@ -39,7 +34,6 @@ main {
   place-items: center;
   place-content: center;
   flex-direction: column;
-
   > * {
     max-width: 50%;
   }

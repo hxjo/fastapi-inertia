@@ -3,6 +3,7 @@ import os
 
 from fastapi import Depends, Request, Response, status
 from fastapi.responses import JSONResponse, HTMLResponse
+from collections import defaultdict
 from typing import (
     Annotated,
     Any,
@@ -24,7 +25,7 @@ from .templating import InertiaExtension
 from .config import InertiaConfig
 from .utils import InertiaContext, _read_manifest_file
 from .exceptions import InertiaVersionConflictException
-from .utils import LazyProp
+from .utils import DeferredProp, IgnoreOnFirstLoadProp
 from dataclasses import dataclass
 
 
@@ -133,17 +134,24 @@ class Inertia:
             == self._component
         )
 
-    def _get_page_data(self) -> Dict[str, Any]:
+    async def _get_page_data(self) -> Dict[str, Any]:
         """
         Get the data for the page
         :return: A dictionary with the page data
         """
-        return {
+        page_data = {
             "component": self._component,
-            "props": self._build_props(),
+            "props": await self._build_props(),
             "url": str(self._request.url),
             "version": self._config.version,
         }
+
+        deferred_props = self._build_deferred_props()
+
+        if deferred_props:
+            page_data["deferredProps"] = deferred_props
+
+        return page_data
 
     def _get_flashed_messages(self) -> list[FlashMessage]:
         """
@@ -202,7 +210,7 @@ class Inertia:
             )
 
     @classmethod
-    def _deep_transform_callables(
+    async def _deep_transform_callables(
         cls,
         prop: Union[
             Callable[..., Any],
@@ -223,20 +231,23 @@ class Inertia:
         """
         if not isinstance(prop, dict):
             if callable(prop):
-                return prop()
+                result = prop()
+                if hasattr(result, "__await__"):
+                    result = await result
+                return await cls._deep_transform_callables(result)
             if isinstance(prop, BaseModel):
                 return json.loads(prop.model_dump_json())
             if isinstance(prop, list):
-                return [cls._deep_transform_callables(p) for p in prop]
+                return [await cls._deep_transform_callables(p) for p in prop]
             return prop
 
         prop_ = prop.copy()
         for key in list(prop_.keys()):
-            prop_[key] = cls._deep_transform_callables(prop_[key])
+            prop_[key] = await cls._deep_transform_callables(prop_[key])
 
         return prop_
 
-    def _build_props(self) -> Union[Dict[str, Any], Any]:
+    async def _build_props(self) -> Union[Dict[str, Any], Any]:
         """
         Build the props for the page.
         If the request is a partial render, it will only include the partial keys
@@ -249,10 +260,28 @@ class Inertia:
                 if key not in self._partial_keys:
                     del _props[key]
             else:
-                if isinstance(_props[key], LazyProp):
+                if isinstance(_props[key], IgnoreOnFirstLoadProp):
                     del _props[key]
 
-        return self._deep_transform_callables(_props)
+        return await self._deep_transform_callables(_props)
+
+    def _build_deferred_props(self) -> Union[Dict[str, List[str]], None]:
+        """
+        Build the deferred props for the page.
+
+        It is internal for now and will be released as part of a future version.
+        The behavior of this utility may change before its public release.
+        :return: A dictionary with the deferred props
+        """
+        if self._is_a_partial_render:
+            return None
+
+        _deferred_props = defaultdict(list)
+        for key, prop in self._props.items():
+            if isinstance(prop, DeferredProp):
+                _deferred_props[prop.group].append(key)
+
+        return _deferred_props
 
     async def _render_ssr(self) -> HTMLResponse:
         """
@@ -260,7 +289,7 @@ class Inertia:
         :return: The HTML response
         """
         self._assert_httpx_is_installed()
-        data = json.dumps(self._get_page_data(), cls=self._config.json_encoder)
+        data = json.dumps(await self._get_page_data(), cls=self._config.json_encoder)
         request_kwargs: Dict[str, Any] = {
             "url": f"{self._config.ssr_url}/render",
             "json": data,
@@ -295,16 +324,16 @@ class Inertia:
             },
         )
 
-    def _render_json(self) -> JSONResponse:
+    async def _render_json(self) -> JSONResponse:
         """
         Render the page using JSON
         :return: The JSON response
         """
         return JSONResponse(
-            content=self._get_page_data(),
+            content=await self._get_page_data(),
             headers={
-                "Vary": "Accept",
                 "X-Inertia": "true",
+                "Vary": "Accept",
             },
         )
 
@@ -384,7 +413,7 @@ class Inertia:
         self._props.update(props or {})
 
         if self._is_inertia_request:
-            return self._render_json()
+            return await self._render_json()
 
         if self._config.ssr_enabled:
             try:
@@ -395,7 +424,8 @@ class Inertia:
                 )
 
         # Fallback to server-side template rendering
-        json_string = json.dumps(self._get_page_data(), cls=self._config.json_encoder)
+        page_data = await self._get_page_data()
+        json_string = json.dumps(page_data, cls=self._config.json_encoder)
         page_json = htmlsafe_json_dumps(json_string)
         return self._config.templates.TemplateResponse(
             name=self._config.root_template_filename,
